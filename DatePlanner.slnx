@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="compose.yaml" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="src/API/DatePlanner.Api/DatePlanner.Api.csproj" />
+    <Project Path="src/API/DatePlanner.Application/DatePlanner.Application.csproj" />
+    <Project Path="src/API/DatePlanner.Domain/DatePlanner.Domain.csproj" />
+    <Project Path="src/API/DatePlanner.Infrastructure/DatePlanner.Infrastructure.csproj" />
+  </Folder>
+</Solution>

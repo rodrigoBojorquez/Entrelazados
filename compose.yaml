@@ -1,0 +1,48 @@
+﻿services:
+  dateplanner.api:
+    image: dateplanner.api
+    container_name: DatePlanner.Api
+    build:
+      context: .
+      dockerfile: src/API/DatePlanner.Api/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dateplanner.database
+
+  dateplanner.database:
+    image: postgres:18
+    container_name: DatePlanner.Database
+    environment:
+        - POSTGRES_DB=dateplanner_db
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+    volumes:
+        - ./.containers/db:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+  
+  dateplanner.app:
+    image: dateplanner.app
+    container_name: DatePlanner.App
+    build:
+      context: ./src/app
+      dockerfile: Dockerfile
+    command:
+        - /bin/sh
+        - -ec
+        - |
+          if [ ! -x node_modules/.bin/vite ]; then
+            npm ci
+          fi
+          exec npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+    volumes:
+      - ./src/app:/app
+      - ./.containers/app/node_modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - dateplanner.api
