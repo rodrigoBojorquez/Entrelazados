@@ -8,10 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FastEndpoints" Version="8.3.0" />
-        <PackageReference Include="FastEndpoints.Swagger" Version="8.3.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     </ItemGroup>
 
     <ItemGroup>
@@ -22,6 +22,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\DatePlanner.Application\DatePlanner.Application.csproj" />
+      <ProjectReference Include="..\DatePlanner.Infrastructure\DatePlanner.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Common\" />
+      <Folder Include="Endpoints\Couples\" />
     </ItemGroup>
 
 </Project>
