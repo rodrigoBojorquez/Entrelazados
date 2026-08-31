@@ -8,11 +8,14 @@ public class Couple : Entity
     {
     }
 
-    public static Couple Create()
+    public static Couple Create(Guid userId1, Guid userId2)
     {
         var couple = new Couple
         {
-            Id = Guid.NewGuid()
+            Id = Guid.NewGuid(),
+            CoupleIds = new HashSet<Guid> { userId1, userId2 },
+            BeginRelationshipAt = DateTime.UtcNow,
+            IsActive = true,
         };
 
         return couple;

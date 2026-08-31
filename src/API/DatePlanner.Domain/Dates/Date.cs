@@ -5,16 +5,6 @@ namespace DatePlanner.Domain.Dates;
 public class Date : Entity
 {
     private Date() {}
-
-    public static Date Create()
-    {
-        Date date = new Date
-        {
-
-        };
-
-        return date;
-    }
     
     public Guid Id { get; private set; }
     
@@ -25,13 +15,50 @@ public class Date : Entity
     public DateStatus Status { get; private set; }
     
     public List<ItineraryItem> Itinerary { get; private set; }
-}
+    
+    public static Result<Date> Create(
+        string title, 
+        DateOnly scheduledFor, 
+        (string Name, TimeOnly StartsAt, TimeOnly EndsAt)[] itinerary)
+    {
+        List<ItineraryItem> itineraryItems = [];
+        
+        foreach (var item in itinerary)
+        {
+            var result = ItineraryItem.Create(item.Name, item.StartsAt, item.EndsAt);
+            
+            if (result.IsFailure)
+            {
+                return Result.Failure<Date>(result.Error);
+            }
+            
+            itineraryItems.Add(result.Value);
+        }
+        
+        Date date = new Date
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Itinerary =  itineraryItems,
+            ScheduledFor = scheduledFor,
+            Status = DateStatus.Proposed
+        };
 
-public class ItineraryItem
-{
-    public Guid ItineraryId { get; set; }
-    
-    public string Name  { get; set; }
-    
-    public 
+        return Result.Success(date);
+    }
+
+    public void Accept()
+    {
+        Status = DateStatus.Booked;
+    }
+
+    public void Cancel()
+    {
+        Status = DateStatus.Canceled;
+    }
+
+    public void Attend()
+    {
+        Status = DateStatus.Attended;
+    }
 }

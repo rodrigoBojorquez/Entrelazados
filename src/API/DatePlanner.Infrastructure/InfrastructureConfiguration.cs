@@ -1,11 +1,9 @@
 using Dapper;
 using DatePlanner.Application.Common.Data;
-using DatePlanner.Application.Common.Messaging;
 using DatePlanner.Infrastructure.Common.Authentication;
 using DatePlanner.Infrastructure.Common.Authorization;
 using DatePlanner.Infrastructure.Common.Data;
 using DatePlanner.Infrastructure.Database;
-using DatePlanner.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -33,14 +31,13 @@ public static class InfrastructureConfiguration
 
         SqlMapper.AddTypeHandler(new GenericArrayHandler<string>());
         
-        services.AddDbContext<DatePlannerDbContext>((sp, options) =>
+        services.AddDbContext<DatePlannerDbContext>(options =>
             options
                 .UseNpgsql(
                     configuration.GetConnectionString("Database"),
                     npgsqlOptions => npgsqlOptions
                         .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.DefaultSchema))
-                .UseSnakeCaseNamingConvention()
-                .AddInterceptors(sp.GetRequiredService<InsertOutboxMessagesInterceptor>()));
+                .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<DatePlannerDbContext>());
 
@@ -48,33 +45,6 @@ public static class InfrastructureConfiguration
         // services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
         // services.AddScoped<ICategoryRepository, CategoryRepository>();
 
-        services.Configure<OutboxOptions>(configuration.GetSection("Events:Outbox"));
-
-        services.ConfigureOptions<ConfigureProcessOutboxJob>();
-        
         return services;
-    }
-    
-    private static void AddDomainEventHandlers(this IServiceCollection services)
-    {
-        Type[] domainEventHandlers = Application.AssemblyReference.Assembly
-            .GetTypes()
-            .Where(t => t.IsAssignableTo(typeof(IDomainEventHandler)))
-            .ToArray();
-        
-        foreach (Type domainEventHandler in domainEventHandlers)
-        {
-            services.TryAddScoped(domainEventHandler);
-        
-            Type domainEvent = domainEventHandler
-                .GetInterfaces()
-                .Single(i => i.IsGenericType)
-                .GetGenericArguments()
-                .Single();
-            
-            Type closedIdempotentHandler = typeof(IdempotentDomainEventHandler<>).MakeGenericType(domainEvent);
-        
-            services.Decorate(domainEventHandler, closedIdempotentHandler);
-        }
     }
 }
