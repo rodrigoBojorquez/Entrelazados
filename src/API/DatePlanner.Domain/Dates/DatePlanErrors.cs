@@ -2,7 +2,7 @@ using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.Domain.Dates;
 
-public static class DateErrors
+public static class DatePlanErrors
 {
     public static Error
         EndTimePrecedesStartTime => Error.Problem(

@@ -4,29 +4,34 @@ namespace DatePlanner.Domain.Dates;
 
 public class ItineraryItem
 {
-    // Name is the Identifier
-    public string Name  { get; set; }
-    
-    public TimeOnly StartsAt  { get; set; }
-    
-    public TimeOnly EndsAt  { get; set; }
-    
-    private ItineraryItem() {}
+    public Guid Id { get; private set; }
 
-    public static Result<ItineraryItem> Create(string name, TimeOnly start, TimeOnly end)
+    public int Order { get; private set; }
+
+    public string Name { get; set; }
+
+    public TimeOnly? StartsAt { get; set; }
+
+    public Location? Location { get; set; }
+
+    private ItineraryItem()
     {
-        if (start >= end)
-        {
-            return Result.Failure<ItineraryItem>(DateErrors.EndTimePrecedesStartTime);
-        }
-        
-        ItineraryItem item = new ItineraryItem
-        {
-            Name = name,
-            StartsAt = start,
-            EndsAt = end
-        };
-
-        return item;
     }
+
+    // public static Result<ItineraryItem> Create(string name, TimeOnly start)
+    // {
+    //     ItineraryItem item = new ItineraryItem
+    //     {
+    //         Name = name,
+    //         StartsAt = start,
+    //         EndsAt = end
+    //     };
+    //
+    //     return item;
+    // }
 }
+
+public record Location(
+    string Name,
+    decimal Latitude,
+    decimal Longitude);

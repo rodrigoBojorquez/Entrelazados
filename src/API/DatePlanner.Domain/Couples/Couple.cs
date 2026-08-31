@@ -7,25 +7,33 @@ public class Couple : Entity
     private Couple()
     {
     }
+    
+    public Guid Id { get; private set; }
+    
+    public Guid PartnerOneId { get; private set; }
+    
+    public Guid PartnerTwoId { get; private set; }
+    
+    public DateTime BeginRelationshipAt { get; private set; }
+    
+    public bool IsActive { get; private set; }
 
-    public static Couple Create(Guid userId1, Guid userId2)
+    public static Result<Couple> Create(Guid partnerOneId, Guid partnerTwoId)
     {
+        if (partnerOneId == partnerTwoId)
+        {
+            return Result.Failure<Couple>(CoupleErrors.SamePersonCannotBePartners(partnerOneId));
+        }
+        
         var couple = new Couple
         {
             Id = Guid.NewGuid(),
-            CoupleIds = new HashSet<Guid> { userId1, userId2 },
+            PartnerOneId = partnerOneId,
+            PartnerTwoId = partnerTwoId,
             BeginRelationshipAt = DateTime.UtcNow,
             IsActive = true,
         };
 
         return couple;
     }
-    
-    public Guid Id { get; private set; }
-    
-    public HashSet<Guid> CoupleIds { get; private set; }
-    
-    public DateTime BeginRelationshipAt { get; private set; }
-    
-    public bool IsActive { get; private set; }
 }
