@@ -1,5 +1,3 @@
-using DatePlanner.Domain.Abstractions;
-
 namespace DatePlanner.Domain.Dates;
 
 public class ItineraryItem
@@ -18,20 +16,21 @@ public class ItineraryItem
     {
     }
 
-    // public static Result<ItineraryItem> Create(string name, TimeOnly start)
-    // {
-    //     ItineraryItem item = new ItineraryItem
-    //     {
-    //         Name = name,
-    //         StartsAt = start,
-    //         EndsAt = end
-    //     };
-    //
-    //     return item;
-    // }
-}
+    public static ItineraryItem Create(
+        int order, 
+        string name,
+        Location? location,
+        TimeOnly? startsAt)
+    {
+        ItineraryItem item = new ItineraryItem
+        {
+            Id = Guid.NewGuid(),
+            Order = order,
+            Name = name,
+            StartsAt = startsAt,
+            Location = location
+        };
 
-public record Location(
-    string Name,
-    decimal Latitude,
-    decimal Longitude);
+        return item;
+    }
+}

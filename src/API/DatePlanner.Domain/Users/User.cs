@@ -23,6 +23,8 @@ public class User : Entity
 
     public string FullName => $"{FirstName} {LastName}";
 
+    public List<UserPreference> Preferences { get; private set; } = [];
+
     public static User Create(string email, string firstName, string lastName, string passwordHash)
     {
         var user = new User
@@ -49,3 +51,5 @@ public class User : Entity
             .Replace('/', '_');
     }
 }
+
+public record UserPreference();
