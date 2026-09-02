@@ -1,4 +1,5 @@
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.Couples;
 
 namespace DatePlanner.Domain.TurnGames;
 
@@ -20,14 +21,11 @@ public class TurnGame : Entity
     
     public DateTime CreatedAtUtc { get; private set; }
     
-    public DateTime StartedAtUtc { get; private set; }
+    public DateTime? StartedAtUtc { get; private set; }
     
-    public DateTime FinishedAtUtc { get; private set; }
+    public DateTime? FinishedAtUtc { get; private set; }
     
     private readonly List<TurnGameRound> _rounds = [];
-
-    public bool IsDraw =>
-        Status == TurnGameStatus.Finished && WinnerId is null;
 
     public IReadOnlyCollection<TurnGameRound> Rounds => _rounds;
     
@@ -40,17 +38,16 @@ public class TurnGame : Entity
     }
 
     public static Result<TurnGame> Create(
-        Guid coupleId, 
-        Guid playerOneId, 
-        Guid playerTwoId, 
+        Couple couple,
         TurnGameType gameType)
     {
-        if (playerOneId == playerTwoId)
+        ArgumentNullException.ThrowIfNull(couple);
+
+        if (!couple.IsActive)
         {
-            return Result.Failure<TurnGame>(TurnGameErrors.SamePlayerGame);
+            return Result.Failure<TurnGame>(TurnGameErrors.CoupleMustBeActive);
         }
-        
-        
+
         if (!TurnGameRulesCatalog.TryGetCurrent(gameType, out ITurnGameRules rules))
         {
             return Result.Failure<TurnGame>(TurnGameErrors.UnsupportedGameType);
@@ -59,15 +56,15 @@ public class TurnGame : Entity
         TurnGame turnGame = new TurnGame
         {
             Id = Guid.NewGuid(),
-            CoupleId = coupleId,
-            PlayerOneId = playerOneId,
-            PlayerTwoId = playerTwoId,
+            CoupleId = couple.Id,
+            PlayerOneId = couple.PartnerOneId,
+            PlayerTwoId = couple.PartnerTwoId,
             GameType = gameType,
             Status = TurnGameStatus.Ready,
             CreatedAtUtc = DateTime.UtcNow
         };
         
-        turnGame.Raise(new TurnGameStartedDomainEvent(turnGame.Id));
+        turnGame.Raise(new TurnGameCreatedDomainEvent(turnGame.Id));
 
         return turnGame;
     }
@@ -89,11 +86,13 @@ public class TurnGame : Entity
         {
             Status = TurnGameStatus.InProgress;
             StartedAtUtc = DateTime.UtcNow;
+            Raise(new TurnGameStartedDomainEvent(Id));
         }
-        
-        _rounds.Add(TurnGameRound.Create(Id, _rounds.Count + 1));
-        
-        Raise(new TurnGameRoundStartedDomainEvent(Id));
+
+        TurnGameRound round = TurnGameRound.Create(Id, _rounds.Count + 1);
+        _rounds.Add(round);
+
+        Raise(new TurnGameRoundStartedDomainEvent(Id, round.Id, round.Number));
         
         return Result.Success();
     }
@@ -103,6 +102,11 @@ public class TurnGame : Entity
         if (Status != TurnGameStatus.InProgress)
         {
             return Result.Failure(TurnGameErrors.GameMustBeInProgress);
+        }
+
+        if (move is null)
+        {
+            return Result.Failure(TurnGameErrors.MoveIsRequired);
         }
 
         if (!Players.TryGetPosition(playerId, out _))
@@ -154,18 +158,19 @@ public class TurnGame : Entity
             .Select(x => x.ToView(Players))
             .ToList();
 
-        RuleDecision decision = Rules.EvaluateGame(finishedRounds);
+        GameDecision decision = Rules.EvaluateGame(finishedRounds);
 
-        if (decision.Kind == RuleDecisionKind.Pending)
+        if (decision is not GameDecision.Won won)
         {
             return;
         }
 
-        WinnerId = decision.Kind == RuleDecisionKind.Winner
-            ? Players.GetId(decision.Winner!.Value)
-            : null;
+        Guid winnerId = Players.GetId(won.Winner);
 
+        WinnerId = winnerId;
         Status = TurnGameStatus.Finished;
         FinishedAtUtc = DateTime.UtcNow;
+
+        Raise(new TurnGameFinishedDomainEvent(Id, CoupleId, winnerId));
     }
 }

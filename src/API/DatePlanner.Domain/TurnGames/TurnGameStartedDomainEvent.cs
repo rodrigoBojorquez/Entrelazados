@@ -2,7 +2,12 @@ using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.Domain.TurnGames;
 
-public class TurnGameStartedDomainEvent(Guid turnGameId) : DomainEvent
+public sealed class TurnGameStartedDomainEvent : DomainEvent
 {
-    public Guid TurnGameId { get; init; }
+    internal TurnGameStartedDomainEvent(Guid turnGameId)
+    {
+        TurnGameId = turnGameId;
+    }
+
+    public Guid TurnGameId { get; }
 }

@@ -8,6 +8,10 @@ public static class TurnGameErrors
         "TurnGame.SamePlayerGame",
         "Los participantes deben ser diferentes.");
 
+    public static Error CoupleMustBeActive => Error.Conflict(
+        "TurnGame.CoupleMustBeActive",
+        "La pareja debe estar activa para iniciar una partida.");
+
     public static Error UnsupportedGameType => Error.Problem(
         "TurnGame.UnsupportedGameType",
         "El tipo de juego no está soportado.");
@@ -35,6 +39,10 @@ public static class TurnGameErrors
     public static Error IncompatibleMove => Error.Problem(
         "TurnGame.IncompatibleMove",
         "El movimiento no pertenece al tipo de juego.");
+
+    public static Error MoveIsRequired => Error.Problem(
+        "TurnGame.MoveIsRequired",
+        "El movimiento es obligatorio.");
 
     public static Error InvalidMove => Error.Problem(
         "TurnGame.InvalidMove",

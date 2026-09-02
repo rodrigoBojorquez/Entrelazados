@@ -23,7 +23,7 @@ public class User : Entity
 
     public string FullName => $"{FirstName} {LastName}";
 
-    public List<UserPreference> Preferences { get; private set; } = [];
+    public DatingPreferences? DatingPreferences { get; private set; }
 
     public static User Create(string email, string firstName, string lastName, string passwordHash)
     {
@@ -52,4 +52,42 @@ public class User : Entity
     }
 }
 
-public record UserPreference();
+public class DatingPreferences : Entity
+{
+    public Guid Id { get; private set; }
+
+    public Guid UserId { get; private set; }
+
+    private readonly List<string> _favoriteActivities = [];
+
+    public IReadOnlyCollection<string> FavoriteActivities => _favoriteActivities;
+
+    private readonly List<string> _avoidedActivities = [];
+
+    public IReadOnlyCollection<string> AvoidedActivities => _avoidedActivities;
+
+    private readonly List<string> _foodPreferences = [];
+
+    public IReadOnlyCollection<string> FoodPreferences => _foodPreferences;
+
+    private DatingPreferences()
+    {
+    }
+
+    public static DatingPreferences Create(Guid userId)
+    {
+        return new DatingPreferences
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId
+        };
+    }
+    
+    public void AddFavoriteActivity(string activity)
+    {
+        if (!_favoriteActivities.Contains(activity))
+        {
+            _favoriteActivities.Add(activity);
+        }
+    }
+}

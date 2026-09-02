@@ -2,7 +2,8 @@ namespace DatePlanner.Domain.Dates;
 
 public enum DateStatus
 {
-    Booked = 0,
-    Canceled = 1,
-    Attended = 2
+    Planning = 0,
+    Booked = 1,
+    Canceled = 2,
+    Attended = 3
 }

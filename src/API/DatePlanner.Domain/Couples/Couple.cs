@@ -20,6 +20,16 @@ public class Couple : Entity
 
     public static Result<Couple> Create(Guid partnerOneId, Guid partnerTwoId)
     {
+        if (partnerOneId == Guid.Empty)
+        {
+            return Result.Failure<Couple>(CoupleErrors.PartnerIdIsRequired(nameof(partnerOneId)));
+        }
+
+        if (partnerTwoId == Guid.Empty)
+        {
+            return Result.Failure<Couple>(CoupleErrors.PartnerIdIsRequired(nameof(partnerTwoId)));
+        }
+
         if (partnerOneId == partnerTwoId)
         {
             return Result.Failure<Couple>(CoupleErrors.SamePersonCannotBePartners(partnerOneId));

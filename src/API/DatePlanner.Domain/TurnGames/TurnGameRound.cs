@@ -73,9 +73,9 @@ public class TurnGameRound : Entity
             _moves.Count + 1,
             move));
 
-        RuleDecision decision = rules.EvaluateRound(CreateMoveViews(players));
+        RoundDecision decision = rules.EvaluateRound(CreateMoveViews(players));
 
-        if (decision.Kind != RuleDecisionKind.Pending)
+        if (decision.Kind != RoundDecisionKind.Pending)
         {
             Complete(decision, players);
         }
@@ -87,12 +87,12 @@ public class TurnGameRound : Entity
     {
         if (Status != TurnGameRoundStatus.Finished)
         {
-            return new RoundView(RuleDecisionKind.Pending, null);
+            return new RoundView(RoundDecisionKind.Pending, null);
         }
 
         if (WinnerId is null)
         {
-            return new RoundView(RuleDecisionKind.Draw, null);
+            return new RoundView(RoundDecisionKind.Draw, null);
         }
 
         if (!players.TryGetPosition(WinnerId.Value, out PlayerPosition winner))
@@ -100,7 +100,7 @@ public class TurnGameRound : Entity
             throw new InvalidOperationException("The persisted round winner is not a participant.");
         }
 
-        return new RoundView(RuleDecisionKind.Winner, winner);
+        return new RoundView(RoundDecisionKind.Winner, winner);
     }
     
     private List<MoveView> CreateMoveViews(
@@ -121,15 +121,15 @@ public class TurnGameRound : Entity
     }
 
     private void Complete(
-        RuleDecision decision,
+        RoundDecision decision,
         TurnGamePlayers players)
     {
-        if (decision.Kind == RuleDecisionKind.Pending)
+        if (decision.Kind == RoundDecisionKind.Pending)
         {
             throw new InvalidOperationException("A round cannot finish with a pending result.");
         }
 
-        WinnerId = decision.Kind == RuleDecisionKind.Winner
+        WinnerId = decision.Kind == RoundDecisionKind.Winner
             ? players.GetId(decision.Winner!.Value)
             : null;
 

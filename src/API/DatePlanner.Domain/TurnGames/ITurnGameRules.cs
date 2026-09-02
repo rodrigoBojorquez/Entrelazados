@@ -8,11 +8,11 @@ public interface ITurnGameRules
     
     Result ValidateNextMove(PlayerPosition player, string moveCode, IReadOnlyList<MoveView> existingMoves);
     
-    RuleDecision EvaluateRound(IReadOnlyList<MoveView> moves);
+    RoundDecision EvaluateRound(IReadOnlyList<MoveView> moves);
 
-    RuleDecision EvaluateGame(IReadOnlyList<RoundView> finishedRounds);
+    GameDecision EvaluateGame(IReadOnlyList<RoundView> finishedRounds);
 }
 
 public sealed record MoveView(PlayerPosition Player, string MoveCode, int Sequence);
 
-public sealed record RoundView(RuleDecisionKind Result, PlayerPosition? Winner);
+public sealed record RoundView(RoundDecisionKind Result, PlayerPosition? Winner);

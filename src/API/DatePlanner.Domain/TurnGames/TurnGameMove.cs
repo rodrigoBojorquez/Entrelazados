@@ -12,7 +12,7 @@ public class TurnGameMove : Entity
 
     public int Sequence { get; private set; }
 
-    public string Code { get; private set; }
+    public string Code { get; private set; } = string.Empty;
     
     public DateTime PlayedAtUtc { get; private set; }
     

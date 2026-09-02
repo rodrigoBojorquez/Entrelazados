@@ -1,6 +1,6 @@
 namespace DatePlanner.Domain.TurnGames;
 
-public enum RuleDecisionKind
+public enum RoundDecisionKind
 {
     Pending = 0,
     Draw = 1,

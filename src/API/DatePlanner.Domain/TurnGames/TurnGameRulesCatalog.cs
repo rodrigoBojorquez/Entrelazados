@@ -5,7 +5,7 @@ internal static class TurnGameRulesCatalog
     private static readonly ITurnGameRules[] Rules =
     [
         new RockPaperScissorsRules(),
-        new DiceRules()
+        new HigherNumberWinsRules()
     ];
 
     internal static bool TryGetCurrent(TurnGameType gameType, out ITurnGameRules rules)

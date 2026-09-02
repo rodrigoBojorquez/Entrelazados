@@ -1,4 +1,3 @@
-using System.Data;
 using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.Domain.TurnGames;
@@ -26,11 +25,11 @@ public sealed class RockPaperScissorsRules : ITurnGameRules
         return Result.Success();
     }
 
-    public RuleDecision EvaluateRound(IReadOnlyList<MoveView> moves)
+    public RoundDecision EvaluateRound(IReadOnlyList<MoveView> moves)
     {
         if (moves.Count != 2)
         {
-            return RuleDecision.Pending();
+            return RoundDecision.Pending();
         }
 
         MoveView playerOne = moves.Single(m => m.Player == PlayerPosition.PlayerOne);
@@ -38,31 +37,31 @@ public sealed class RockPaperScissorsRules : ITurnGameRules
 
         if (playerOne.MoveCode == playerTwo.MoveCode)
         {
-            return RuleDecision.Draw();
+            return RoundDecision.Draw();
         }
 
         bool playerOneWins = (playerOne.MoveCode == "rock" && playerTwo.MoveCode == "scissors") ||
                              (playerOne.MoveCode == "scissors" && playerTwo.MoveCode == "paper") ||
                              (playerOne.MoveCode == "paper" && playerTwo.MoveCode == "rock");
         
-        return RuleDecision.WonBy(playerOneWins ? PlayerPosition.PlayerOne : PlayerPosition.PlayerTwo);
+        return RoundDecision.WonBy(playerOneWins ? PlayerPosition.PlayerOne : PlayerPosition.PlayerTwo);
     }
 
-    public RuleDecision EvaluateGame(IReadOnlyList<RoundView> finishedRounds)
+    public GameDecision EvaluateGame(IReadOnlyList<RoundView> finishedRounds)
     {
         int playerOneWins = finishedRounds.Count(r => r.Winner == PlayerPosition.PlayerOne);
         int playerTwoWins = finishedRounds.Count(r => r.Winner == PlayerPosition.PlayerTwo);
 
         if (playerOneWins >= RequiredRoundWinsToWinGame)
         {
-            return RuleDecision.WonBy(PlayerPosition.PlayerOne);
+            return GameDecision.WonBy(PlayerPosition.PlayerOne);
         }
 
         if (playerTwoWins >= RequiredRoundWinsToWinGame)
         {
-            return RuleDecision.WonBy(PlayerPosition.PlayerTwo);
+            return GameDecision.WonBy(PlayerPosition.PlayerTwo);
         }
 
-        return RuleDecision.Pending();
+        return GameDecision.Continue();
     }
 }
