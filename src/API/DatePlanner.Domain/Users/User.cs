@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Xml.XPath;
 using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.Domain.Users;
@@ -40,6 +41,12 @@ public class User : Entity
         return user;
     }
 
+    public void ChangeName(string newFirstName, string newLastName)
+    {
+        FirstName = newFirstName;
+        LastName = newLastName;
+    }
+
     private static string GeneratePartnerCode()
     {
         Span<byte> bytes = stackalloc byte[9];
@@ -49,45 +56,5 @@ public class User : Entity
             .TrimEnd('=')
             .Replace('+', '-')
             .Replace('/', '_');
-    }
-}
-
-public class DatingPreferences : Entity
-{
-    public Guid Id { get; private set; }
-
-    public Guid UserId { get; private set; }
-
-    private readonly List<string> _favoriteActivities = [];
-
-    public IReadOnlyCollection<string> FavoriteActivities => _favoriteActivities;
-
-    private readonly List<string> _avoidedActivities = [];
-
-    public IReadOnlyCollection<string> AvoidedActivities => _avoidedActivities;
-
-    private readonly List<string> _foodPreferences = [];
-
-    public IReadOnlyCollection<string> FoodPreferences => _foodPreferences;
-
-    private DatingPreferences()
-    {
-    }
-
-    public static DatingPreferences Create(Guid userId)
-    {
-        return new DatingPreferences
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId
-        };
-    }
-    
-    public void AddFavoriteActivity(string activity)
-    {
-        if (!_favoriteActivities.Contains(activity))
-        {
-            _favoriteActivities.Add(activity);
-        }
     }
 }
