@@ -1,5 +1,4 @@
 using DatePlanner.Domain.Abstractions;
-using DatePlanner.Domain.TurnGames;
 
 namespace DatePlanner.Domain.Dates;
 
@@ -15,8 +14,6 @@ public class DatePlan : Entity
 
     public Guid PartnerWhoPlannedId { get; private set; }
 
-    public Guid OriginatingTurnGameId { get; private set; }
-
     public DateOnly? ScheduledFor { get; private set; }
 
     public DateStatus Status { get; private set; }
@@ -25,24 +22,15 @@ public class DatePlan : Entity
 
     public IReadOnlyCollection<ItineraryItem> Itinerary => _itinerary.AsReadOnly();
 
-    public static Result<DatePlan> CreateFromGame(
-        TurnGameFinishedDomainEvent gameFinished)
+    public static Result<DatePlan> Create(
+        Guid coupleId,
+        Guid partnerWhoPlannedId)
     {
-        ArgumentNullException.ThrowIfNull(gameFinished);
-
-        if (gameFinished.TurnGameId == Guid.Empty ||
-            gameFinished.CoupleId == Guid.Empty ||
-            gameFinished.WinnerId == Guid.Empty)
-        {
-            return Result.Failure<DatePlan>(DatePlanErrors.InvalidGameOutcome);
-        }
-
         DatePlan datePlan = new DatePlan
         {
             Id = Guid.NewGuid(),
-            CoupleId = gameFinished.CoupleId,
-            PartnerWhoPlannedId = gameFinished.WinnerId,
-            OriginatingTurnGameId = gameFinished.TurnGameId,
+            CoupleId = coupleId,
+            PartnerWhoPlannedId = partnerWhoPlannedId,
             Status = DateStatus.Planning
         };
 

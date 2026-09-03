@@ -1,4 +1,4 @@
-namespace DatePlanner.Domain.TurnGames;
+namespace DatePlanner.Domain.TurnGames.Rules;
 
 public abstract record GameDecision
 {

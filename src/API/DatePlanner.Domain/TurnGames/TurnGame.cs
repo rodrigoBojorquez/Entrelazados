@@ -1,5 +1,8 @@
 using DatePlanner.Domain.Abstractions;
 using DatePlanner.Domain.Couples;
+using DatePlanner.Domain.TurnGames.Events;
+using DatePlanner.Domain.TurnGames.Rounds;
+using DatePlanner.Domain.TurnGames.Rules;
 
 namespace DatePlanner.Domain.TurnGames;
 
@@ -102,11 +105,6 @@ public class TurnGame : Entity
         if (Status != TurnGameStatus.InProgress)
         {
             return Result.Failure(TurnGameErrors.GameMustBeInProgress);
-        }
-
-        if (move is null)
-        {
-            return Result.Failure(TurnGameErrors.MoveIsRequired);
         }
 
         if (!Players.TryGetPosition(playerId, out _))

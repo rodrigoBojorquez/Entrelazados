@@ -1,6 +1,7 @@
 using System.Globalization;
+using DatePlanner.Domain.TurnGames.Rules;
 
-namespace DatePlanner.Domain.TurnGames;
+namespace DatePlanner.Domain.TurnGames.Rules.HigherNumberWins;
 
 public sealed record HigherNumberMove : ITurnGameMove
 {

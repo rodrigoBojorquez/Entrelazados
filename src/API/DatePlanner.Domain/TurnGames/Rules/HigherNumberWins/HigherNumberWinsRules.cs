@@ -1,6 +1,7 @@
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.TurnGames.Rules;
 
-namespace DatePlanner.Domain.TurnGames;
+namespace DatePlanner.Domain.TurnGames.Rules.HigherNumberWins;
 
 /// <summary>
 /// Each player chooses a number from one to six. The higher number wins the round.

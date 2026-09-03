@@ -4,9 +4,6 @@ namespace DatePlanner.Domain.Dates;
 
 public static class DatePlanErrors
 {
-    public static Error InvalidGameOutcome => Error.Problem(
-        "DatePlan.InvalidGameOutcome",
-        "El resultado de la partida no contiene identificadores válidos.");
 
     public static Error MustBePlanning => Error.Conflict(
         "DatePlan.MustBePlanning",

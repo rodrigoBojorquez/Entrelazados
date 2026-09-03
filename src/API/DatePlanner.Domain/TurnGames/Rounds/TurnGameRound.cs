@@ -1,6 +1,7 @@
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.TurnGames.Rules;
 
-namespace DatePlanner.Domain.TurnGames;
+namespace DatePlanner.Domain.TurnGames.Rounds;
 
 public class TurnGameRound : Entity
 {

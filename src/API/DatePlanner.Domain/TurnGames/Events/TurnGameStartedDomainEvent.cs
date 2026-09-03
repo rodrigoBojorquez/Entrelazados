@@ -1,6 +1,6 @@
 using DatePlanner.Domain.Abstractions;
 
-namespace DatePlanner.Domain.TurnGames;
+namespace DatePlanner.Domain.TurnGames.Events;
 
 public sealed class TurnGameStartedDomainEvent : DomainEvent
 {

@@ -1,4 +1,6 @@
-namespace DatePlanner.Domain.TurnGames;
+using DatePlanner.Domain.TurnGames.Rules;
+
+namespace DatePlanner.Domain.TurnGames.Rules.RockPaperScissors;
 
 public sealed record RockPaperScissorsMove : ITurnGameMove
 {

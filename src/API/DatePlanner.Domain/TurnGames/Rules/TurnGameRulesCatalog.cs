@@ -1,4 +1,7 @@
-namespace DatePlanner.Domain.TurnGames;
+using DatePlanner.Domain.TurnGames.Rules.HigherNumberWins;
+using DatePlanner.Domain.TurnGames.Rules.RockPaperScissors;
+
+namespace DatePlanner.Domain.TurnGames.Rules;
 
 internal static class TurnGameRulesCatalog
 {
