@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DatePlanner.Infrastructure.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace DatePlanner.Api.Common.Extensions;
 
@@ -8,10 +9,7 @@ internal static class MigrationExtensions
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
 
-        // ApplyMigration<UsersDbContext>(scope);
-        // ApplyMigration<EventsDbContext>(scope);
-        // ApplyMigration<TicketingDbContext>(scope);
-        // ApplyMigration<AttendanceDbContext>(scope);
+        ApplyMigration<DatePlannerDbContext>(scope);
     }
 
     private static void ApplyMigration<TDbContext>(IServiceScope scope)
