@@ -1,0 +1,12 @@
+{
+  "stryker-config": {
+    "project": "DatePlanner.Domain.csproj",
+    "disable-mix-mutants": true,
+    "reporters": [
+      "progress",
+      "cleartext",
+      "html",
+      "json"
+    ]
+  }
+}

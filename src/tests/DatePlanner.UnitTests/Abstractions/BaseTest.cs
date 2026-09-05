@@ -1,21 +1,19 @@
-using Bogus;
 using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.UnitTests.Abstractions;
 
 public class BaseTest
 {
-    protected static readonly Faker Faker = new();
-
-    public static T AssertDomainEventWasPublished<T>(Entity entity) where T : IDomainEvent
+    protected static T AssertDomainEventWasPublished<T>(Entity entity) where T : IDomainEvent
     {
-        T? domainEvent = entity.DomainEvents.OfType<T>().SingleOrDefault();
+        T[] domainEvents = entity.DomainEvents.OfType<T>().ToArray();
 
-        if (domainEvent is null)
+        if (domainEvents.Length != 1)
         {
-            throw new Exception($"{typeof(T).Name} was not published");
+            throw new Xunit.Sdk.XunitException(
+                $"Expected exactly one {typeof(T).Name}, but found {domainEvents.Length}.");
         }
 
-        return domainEvent;
+        return domainEvents[0];
     }
 }
