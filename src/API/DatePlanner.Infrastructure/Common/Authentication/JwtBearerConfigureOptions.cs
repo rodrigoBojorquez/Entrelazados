@@ -1,17 +1,35 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
+using System.Text;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DatePlanner.Infrastructure.Common.Authentication;
 
-internal sealed class JwtBearerConfigureOptions(IConfiguration configuration)
+internal sealed class JwtBearerConfigureOptions(IOptions<AuthenticationOptions> authenticationOptions)
     : IConfigureNamedOptions<JwtBearerOptions>
 {
-    private const string ConfigurationSectionName = "Authentication";
-
     public void Configure(JwtBearerOptions options)
     {
-        configuration.GetSection(ConfigurationSectionName).Bind(options);
+        AuthenticationOptions authentication = authenticationOptions.Value;
+
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = authentication.Issuer,
+            ValidateAudience = true,
+            ValidAudience = authentication.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(authentication.Key)),
+            ValidateLifetime = true,
+            RequireExpirationTime = true,
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "sub"
+        };
+
+        options.SaveToken = false;
     }
 
     public void Configure(string? name, JwtBearerOptions options)

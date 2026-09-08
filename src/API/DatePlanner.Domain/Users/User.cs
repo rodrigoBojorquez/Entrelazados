@@ -48,6 +48,15 @@ public class User : Entity
         LastName = newLastName;
     }
 
+    public bool VerifyPassword(
+        string password,
+        Func<string, string, bool> passwordVerifier)
+    {
+        ArgumentNullException.ThrowIfNull(passwordVerifier);
+
+        return passwordVerifier(password, PasswordHash);
+    }
+
     public DatingPreferences GetOrCreateDatingPreferences()
     {
         DatingPreferences ??= DatingPreferences.Create(Id);

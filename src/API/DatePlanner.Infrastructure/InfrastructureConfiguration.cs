@@ -1,6 +1,7 @@
 using Dapper;
 using DatePlanner.Application.Common.Authentication;
 using DatePlanner.Application.Common.Data;
+using DatePlanner.Domain.Authentication;
 using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.Dates;
 using DatePlanner.Domain.TurnGames;
@@ -9,6 +10,7 @@ using DatePlanner.Infrastructure.Common.Authentication;
 using DatePlanner.Infrastructure.Common.Authorization;
 using DatePlanner.Infrastructure.Common.Data;
 using DatePlanner.Infrastructure.Database;
+using DatePlanner.Infrastructure.Authentication;
 using DatePlanner.Infrastructure.DatePlans;
 using DatePlanner.Infrastructure.TurnGames;
 using DatePlanner.Infrastructure.Users;
@@ -50,6 +52,7 @@ public static class InfrastructureConfiguration
                 .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<DatePlannerDbContext>());
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICoupleRepository, CoupleRepository>();
         services.AddScoped<IDatePlanRepository, DatePlanRepository>();

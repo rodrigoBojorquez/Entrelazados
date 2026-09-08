@@ -1,5 +1,6 @@
 using DatePlanner.Application.Common.Authentication;
 using DatePlanner.Application.Common.Data;
+using DatePlanner.Domain.Authentication;
 using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.Dates;
 using DatePlanner.Domain.TurnGames;
@@ -23,6 +24,60 @@ internal sealed class FakePasswordHasher : IPasswordHasher
     public string Hash(string password) => $"hashed:{password}";
 
     public bool Verify(string password, string passwordHash) => passwordHash == Hash(password);
+}
+
+internal sealed class FakeTokenProvider(DateTime utcNow) : ITokenProvider
+{
+    private int _refreshTokenSequence;
+
+    public AccessToken GenerateAccessToken(User user) =>
+        new($"access-token:{user.Id}", utcNow.AddMinutes(60));
+
+    public GeneratedRefreshToken GenerateRefreshToken()
+    {
+        _refreshTokenSequence++;
+        string value = $"refresh-token-{_refreshTokenSequence}";
+
+        return new GeneratedRefreshToken(
+            value,
+            HashRefreshToken(value),
+            utcNow,
+            utcNow.AddDays(7));
+    }
+
+    public string HashRefreshToken(string refreshToken) => $"hash:{refreshToken}";
+}
+
+internal sealed class FakeTimeProvider(DateTimeOffset utcNow) : TimeProvider
+{
+    public override DateTimeOffset GetUtcNow() => utcNow;
+}
+
+internal sealed class FakeRefreshTokenRepository(params RefreshToken[] refreshTokens)
+    : IRefreshTokenRepository
+{
+    private readonly List<RefreshToken> _refreshTokens = [.. refreshTokens];
+
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
+
+    public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash) =>
+        Task.FromResult(_refreshTokens.FirstOrDefault(token => token.TokenHash == tokenHash));
+
+    public Task<IReadOnlyCollection<RefreshToken>> GetActiveByFamilyIdAsync(
+        Guid familyId,
+        DateTime utcNow) =>
+        Task.FromResult<IReadOnlyCollection<RefreshToken>>(_refreshTokens
+            .Where(token => token.FamilyId == familyId && token.IsActive(utcNow))
+            .ToArray());
+
+    public Task<IReadOnlyCollection<RefreshToken>> GetActiveByUserIdAsync(
+        Guid userId,
+        DateTime utcNow) =>
+        Task.FromResult<IReadOnlyCollection<RefreshToken>>(_refreshTokens
+            .Where(token => token.UserId == userId && token.IsActive(utcNow))
+            .ToArray());
+
+    public void Insert(RefreshToken refreshToken) => _refreshTokens.Add(refreshToken);
 }
 
 internal sealed class FakeUserRepository(params User[] users) : IUserRepository

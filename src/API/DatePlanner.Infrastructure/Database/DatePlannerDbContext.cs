@@ -1,4 +1,5 @@
 using DatePlanner.Application.Common.Data;
+using DatePlanner.Domain.Authentication;
 using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.Dates;
 using DatePlanner.Domain.TurnGames;
@@ -13,6 +14,8 @@ namespace DatePlanner.Infrastructure.Database;
 public class DatePlannerDbContext(DbContextOptions<DatePlannerDbContext> options) : DbContext(options), IUnitOfWork
 {
     public DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     public DbSet<DatingPreferencesEntity> DatingPreferences => Set<DatingPreferencesEntity>();
 

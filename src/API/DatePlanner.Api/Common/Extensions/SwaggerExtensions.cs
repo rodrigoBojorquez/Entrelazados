@@ -16,6 +16,19 @@ internal static class SwaggerExtensions
             });
 
             options.CustomSchemaIds(t => t.FullName?.Replace("+", "."));
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "JWT access token"
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            });
         });
 
         return services;
