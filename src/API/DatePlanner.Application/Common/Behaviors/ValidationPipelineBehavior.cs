@@ -35,7 +35,9 @@ internal sealed class ValidationPipelineBehavior<TRequest, TResponse>(
 
             if (failureMethod is not null)
             {
-                return (TResponse)failureMethod.Invoke(null, [CreateValidationError(validationFailures)]);
+                return (TResponse)failureMethod.Invoke(
+                    null,
+                    [CreateValidationError(validationFailures)])!;
             }
         }
         else if (typeof(TResponse) == typeof(Result))

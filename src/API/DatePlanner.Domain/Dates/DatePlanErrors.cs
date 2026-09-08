@@ -5,6 +5,10 @@ namespace DatePlanner.Domain.Dates;
 public static class DatePlanErrors
 {
 
+    public static Error NotFound(Guid datePlanId) => Error.NotFound(
+        "DatePlan.NotFound",
+        $"No existe el plan de cita {datePlanId} o el usuario no tiene acceso a él.");
+
     public static Error MustBePlanning => Error.Conflict(
         "DatePlan.MustBePlanning",
         "El plan debe estar en estado de planeación para realizar esta operación.");
@@ -20,6 +24,10 @@ public static class DatePlanErrors
     public static Error ItineraryItemNameIsRequired => Error.Problem(
         "DatePlan.ItineraryItemNameIsRequired",
         "El nombre del elemento del itinerario es obligatorio.");
+
+    public static Error IncompleteLocation => Error.Problem(
+        "DatePlan.IncompleteLocation",
+        "La latitud y la longitud deben proporcionarse juntas.");
 
     public static Error ItineraryItemIdIsRequired => Error.Problem(
         "DatePlan.ItineraryItemIdIsRequired",

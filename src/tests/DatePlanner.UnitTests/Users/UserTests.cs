@@ -21,6 +21,8 @@ public class UserTests : BaseTest
         user.LastName.Should().Be(lastName);
         user.FullName.Should().Be("Ana Lopez");
         user.PartnerCode.Should().MatchRegex("^[A-Za-z0-9_-]{12}$");
+        user.DatingPreferences.Should().NotBeNull();
+        user.DatingPreferences!.UserId.Should().Be(user.Id);
     }
 
     [Fact]

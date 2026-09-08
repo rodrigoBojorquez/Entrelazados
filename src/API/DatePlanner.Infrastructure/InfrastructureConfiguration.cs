@@ -1,9 +1,18 @@
 using Dapper;
+using DatePlanner.Application.Common.Authentication;
 using DatePlanner.Application.Common.Data;
+using DatePlanner.Domain.Couples;
+using DatePlanner.Domain.Dates;
+using DatePlanner.Domain.TurnGames;
+using DatePlanner.Domain.Users;
 using DatePlanner.Infrastructure.Common.Authentication;
 using DatePlanner.Infrastructure.Common.Authorization;
 using DatePlanner.Infrastructure.Common.Data;
 using DatePlanner.Infrastructure.Database;
+using DatePlanner.Infrastructure.DatePlans;
+using DatePlanner.Infrastructure.TurnGames;
+using DatePlanner.Infrastructure.Users;
+using DatePlanner.Infrastructure.Couples;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +37,7 @@ public static class InfrastructureConfiguration
         services.TryAddSingleton(npgsqlDataSource);
 
         services.TryAddScoped<IDbConnectionFactory, DbConnectionFactory>();
+        services.TryAddScoped<IPasswordHasher, PasswordHasher>();
 
         SqlMapper.AddTypeHandler(new GenericArrayHandler<string>());
         
@@ -40,10 +50,10 @@ public static class InfrastructureConfiguration
                 .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<DatePlannerDbContext>());
-
-        // services.AddScoped<IEventRepository, EventRepository>();
-        // services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
-        // services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICoupleRepository, CoupleRepository>();
+        services.AddScoped<IDatePlanRepository, DatePlanRepository>();
+        services.AddScoped<ITurnGameRepository, TurnGameRepository>();
 
         return services;
     }

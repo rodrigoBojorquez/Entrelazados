@@ -4,6 +4,10 @@ namespace DatePlanner.Domain.TurnGames;
 
 public static class TurnGameErrors
 {
+    public static Error NotFound(Guid turnGameId) => Error.NotFound(
+        "TurnGame.NotFound",
+        $"No existe la partida {turnGameId} o el usuario no tiene acceso a ella.");
+
     public static Error SamePlayerGame => Error.Problem(
         "TurnGame.SamePlayerGame",
         "Los participantes deben ser diferentes.");

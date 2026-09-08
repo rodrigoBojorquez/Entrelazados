@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Xml.XPath;
 using DatePlanner.Domain.Abstractions;
 
 namespace DatePlanner.Domain.Users;
@@ -12,15 +11,15 @@ public class User : Entity
 
     public Guid Id { get; private set; }
 
-    public string Email { get; private set; }
+    public string Email { get; private set; } = string.Empty;
 
-    public string FirstName { get; private set; }
+    public string FirstName { get; private set; } = string.Empty;
 
-    public string LastName { get; private set; }
+    public string LastName { get; private set; } = string.Empty;
 
-    private string PasswordHash { get; set; }
+    private string PasswordHash { get; set; } = string.Empty;
 
-    public string PartnerCode { get; private set; }
+    public string PartnerCode { get; private set; } = string.Empty;
 
     public string FullName => $"{FirstName} {LastName}";
 
@@ -38,6 +37,8 @@ public class User : Entity
             PartnerCode = GeneratePartnerCode()
         };
 
+        user.DatingPreferences = DatingPreferences.Create(user.Id);
+
         return user;
     }
 
@@ -45,6 +46,13 @@ public class User : Entity
     {
         FirstName = newFirstName;
         LastName = newLastName;
+    }
+
+    public DatingPreferences GetOrCreateDatingPreferences()
+    {
+        DatingPreferences ??= DatingPreferences.Create(Id);
+
+        return DatingPreferences;
     }
 
     private static string GeneratePartnerCode()

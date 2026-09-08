@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\API\DatePlanner.Application\DatePlanner.Application.csproj" />
       <ProjectReference Include="..\..\API\DatePlanner.Domain\DatePlanner.Domain.csproj" />
     </ItemGroup>
 
