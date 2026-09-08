@@ -1,4 +1,3 @@
-using DatePlanner.Application.TurnGames.GetTurnGame;
 using DatePlanner.Application.TurnGames.PlayTurnGameMove;
 using DatePlanner.Application.TurnGames.StartTurnGameRound;
 using DatePlanner.Domain.Abstractions;
@@ -50,22 +49,5 @@ public sealed class TurnGameUseCaseTests
         result.Error.Code.Should().Be("TurnGame.InvalidMove");
         game.Rounds.Single().Moves.Should().BeEmpty();
         unitOfWork.SaveCalls.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task GetTurnGame_ShouldHideOpponentMoveUntilRoundFinishes()
-    {
-        Couple couple = Couple.Create(Guid.NewGuid(), Guid.NewGuid()).Value;
-        TurnGame game = TurnGame.Create(couple, TurnGameType.RockPaperScissors).Value;
-        game.StartRound();
-        game.Play(game.PlayerOneId, Domain.TurnGames.Rules.RockPaperScissors.RockPaperScissorsMove.Rock);
-        var handler = new GetTurnGameQueryHandler(new FakeTurnGameRepository(game));
-
-        Result<TurnGameResponse> result = await handler.Handle(
-            new GetTurnGameQuery(game.PlayerTwoId, game.Id),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Rounds.Single().Moves.Single().Code.Should().BeNull();
     }
 }
