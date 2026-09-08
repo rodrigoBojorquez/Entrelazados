@@ -10,6 +10,7 @@
     <Project Path="src/API/DatePlanner.Infrastructure/DatePlanner.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/tests/">
+    <Project Path="src/tests/DatePlanner.IntegrationTests/DatePlanner.IntegrationTests.csproj" />
     <Project Path="src/tests/DatePlanner.UnitTests/DatePlanner.UnitTests.csproj" />
   </Folder>
 </Solution>
