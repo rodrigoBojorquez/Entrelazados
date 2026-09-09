@@ -3,10 +3,14 @@ using DatePlanner.Application.TurnGames.GetTurnGame;
 using DatePlanner.Application.TurnGames.PlayTurnGameMove;
 using DatePlanner.Application.TurnGames.StartTurnGameRound;
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.Dates;
 using DatePlanner.Domain.TurnGames;
 using DatePlanner.Domain.TurnGames.Rounds;
+using DatePlanner.Infrastructure.Database;
 using DatePlanner.IntegrationTests.Abstractions;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DatePlanner.IntegrationTests.TurnGames;
 
@@ -47,6 +51,13 @@ public sealed class TurnGameTests(IntegrationTestWebAppFactory factory)
         queryResult.Value.Rounds.SelectMany(round => round.Moves)
             .Should().HaveCount(4)
             .And.OnlyContain(move => move.Code != null);
+
+        DatePlannerDbContext dbContext = Services.GetRequiredService<DatePlannerDbContext>();
+        DatePlan datePlan = await dbContext.DatePlans
+            .SingleAsync(plan => plan.CoupleId == couple.Id);
+
+        datePlan.PartnerWhoPlannedId.Should().Be(couple.PartnerOne.Id);
+        datePlan.Status.Should().Be(DateStatus.Planning);
     }
 
     [Fact]

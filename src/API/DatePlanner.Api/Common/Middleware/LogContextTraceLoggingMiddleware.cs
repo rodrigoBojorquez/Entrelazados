@@ -5,13 +5,13 @@ namespace DatePlanner.Api.Common.Middleware;
 
 internal sealed class LogContextTraceLoggingMiddleware(RequestDelegate next)
 {
-    public Task Invoke(HttpContext context)
+    public async Task Invoke(HttpContext context)
     {
-        string traceId = Activity.Current?.TraceId.ToString();
+        string traceId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
 
         using (LogContext.PushProperty("TraceId", traceId))
         {
-            return next.Invoke(context);
+            await next.Invoke(context);
         }
     }
 }

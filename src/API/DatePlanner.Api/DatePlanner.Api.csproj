@@ -31,7 +31,11 @@
 
     <ItemGroup>
       <Folder Include="Common\" />
+      <Folder Include="Endpoints\Authentication\" />
       <Folder Include="Endpoints\Couples\" />
+      <Folder Include="Endpoints\Dates\" />
+      <Folder Include="Endpoints\TurnGames\" />
+      <Folder Include="Endpoints\Users\" />
     </ItemGroup>
 
 </Project>

@@ -7,6 +7,10 @@ public static class EndpointExtensions
 {
     public static IServiceCollection AddEndpoints(this IServiceCollection services, params Assembly[] assemblies)
     {
+        assemblies = assemblies.Length == 0
+            ? [typeof(EndpointExtensions).Assembly]
+            : assemblies;
+
         ServiceDescriptor[] serviceDescriptors = assemblies
             .SelectMany(a => a.GetTypes())
             .Where(type => type is { IsAbstract: false, IsInterface: false } &&

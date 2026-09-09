@@ -1,6 +1,7 @@
 using Dapper;
 using DatePlanner.Application.Common.Authentication;
 using DatePlanner.Application.Common.Data;
+using DatePlanner.Application.Common.Events;
 using DatePlanner.Domain.Authentication;
 using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.Dates;
@@ -9,6 +10,7 @@ using DatePlanner.Domain.Users;
 using DatePlanner.Infrastructure.Common.Authentication;
 using DatePlanner.Infrastructure.Common.Authorization;
 using DatePlanner.Infrastructure.Common.Data;
+using DatePlanner.Infrastructure.Common.Events;
 using DatePlanner.Infrastructure.Database;
 using DatePlanner.Infrastructure.Authentication;
 using DatePlanner.Infrastructure.DatePlans;
@@ -40,6 +42,7 @@ public static class InfrastructureConfiguration
 
         services.TryAddScoped<IDbConnectionFactory, DbConnectionFactory>();
         services.TryAddScoped<IPasswordHasher, PasswordHasher>();
+        services.TryAddScoped<IDomainEventsDispatcher, DomainEventsDispatcher>();
 
         SqlMapper.AddTypeHandler(new GenericArrayHandler<string>());
         

@@ -6,7 +6,7 @@
       context: .
       dockerfile: src/API/DatePlanner.Api/Dockerfile
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       - dateplanner.database
 
@@ -20,7 +20,7 @@
     volumes:
         - ./.containers/db:/var/lib/postgresql
     ports:
-      - "5432:5432"
+      - "5433:5432"
   
   dateplanner.app:
     image: dateplanner.app

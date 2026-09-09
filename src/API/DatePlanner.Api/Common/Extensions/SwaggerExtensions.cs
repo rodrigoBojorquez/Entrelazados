@@ -10,9 +10,9 @@ internal static class SwaggerExtensions
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Evently API",
+                Title = "DatePlanner API",
                 Version = "v1",
-                Description = "Evently API built using the modular monolith architecture."
+                Description = "API for planning dates as a couple."
             });
 
             options.CustomSchemaIds(t => t.FullName?.Replace("+", "."));
