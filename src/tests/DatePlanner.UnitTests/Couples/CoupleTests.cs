@@ -1,6 +1,7 @@
 using DatePlanner.UnitTests.Abstractions;
 using DatePlanner.Domain.Abstractions;
 using DatePlanner.Domain.Couples;
+using DatePlanner.Domain.Couples.Events;
 using FluentAssertions;
 
 namespace DatePlanner.UnitTests.Couples;
@@ -21,6 +22,11 @@ public class CoupleTests : BaseTest
         result.Value.PartnerTwoId.Should().Be(partnerTwoId);
         result.Value.IsActive.Should().BeTrue();
         result.Value.BeginRelationshipAt.Should().NotBe(default);
+        RelationshipBeganDomainEvent domainEvent =
+            AssertDomainEventWasPublished<RelationshipBeganDomainEvent>(result.Value);
+        domainEvent.CoupleId.Should().Be(result.Value.Id);
+        domainEvent.PartnerOneId.Should().Be(partnerOneId);
+        domainEvent.PartnerTwoId.Should().Be(partnerTwoId);
     }
 
     [Theory]
@@ -47,5 +53,28 @@ public class CoupleTests : BaseTest
 
         result.IsFailure.Should().BeTrue();
         result.Error.ShouldHaveCode("Couple.SamePersonCannotBePartners", ErrorType.Problem);
+    }
+
+    [Fact]
+    public void EndRelationship_ShouldDeactivateActiveCouple()
+    {
+        Couple couple = Couple.Create(Guid.NewGuid(), Guid.NewGuid()).Value;
+
+        Result result = couple.EndRelationship();
+
+        result.IsSuccess.Should().BeTrue();
+        couple.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void EndRelationship_ShouldFail_WhenCoupleIsAlreadyInactive()
+    {
+        Couple couple = Couple.Create(Guid.NewGuid(), Guid.NewGuid()).Value;
+        couple.EndRelationship();
+
+        Result result = couple.EndRelationship();
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.ShouldHaveCode("Couple.RelationshipAlreadyEnded", ErrorType.Conflict);
     }
 }

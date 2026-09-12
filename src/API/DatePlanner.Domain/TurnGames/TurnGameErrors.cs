@@ -20,6 +20,18 @@ public static class TurnGameErrors
         "TurnGame.UnsupportedGameType",
         "El tipo de juego no está soportado.");
 
+    public static Error GameTypeMustBeSelected => Error.Conflict(
+        "TurnGame.GameTypeMustBeSelected",
+        "Ambas personas deben conocer el juego elegido antes de comenzar.");
+
+    public static Error GameTypeAlreadySelected => Error.Conflict(
+        "TurnGame.GameTypeAlreadySelected",
+        "El tipo de juego ya fue elegido por tu pareja.");
+
+    public static Error OnlyScheduledGamesCanBeSelected => Error.Conflict(
+        "TurnGame.OnlyScheduledGamesCanBeSelected",
+        "Esta partida no está esperando la selección de un juego.");
+
     public static Error GameAlreadyFinished => Error.Conflict(
         "TurnGame.AlreadyFinished",
         "La partida ya terminó.");
@@ -59,4 +71,24 @@ public static class TurnGameErrors
     public static Error RoundAlreadyFinished => Error.Conflict(
         "TurnGame.RoundAlreadyFinished",
         "No se puede jugar en una ronda terminada.");
+
+    public static Error RoundNotFound(Guid roundId) => Error.NotFound(
+        "TurnGame.RoundNotFound",
+        $"No existe la ronda {roundId} en esta partida.");
+
+    public static Error RoundDoesNotUseTimer => Error.Conflict(
+        "TurnGame.RoundDoesNotUseTimer",
+        "Esta ronda no tiene un límite de tiempo.");
+
+    public static Error RoundTimerStillRunning => Error.Conflict(
+        "TurnGame.RoundTimerStillRunning",
+        "La ronda todavía tiene tiempo disponible.");
+
+    public static Error RoundMoveTimeExpired => Error.Conflict(
+        "TurnGame.RoundMoveTimeExpired",
+        "El tiempo para elegir terminó.");
+
+    public static Error BothPlayersMustBeConnected => Error.Conflict(
+        "TurnGame.BothPlayersMustBeConnected",
+        "La partida comenzará cuando ambos jugadores estén conectados.");
 }

@@ -27,4 +27,27 @@ internal static class DatePlanAccess
             ? datePlan
             : Result.Failure<DatePlan>(DatePlanErrors.NotFound(datePlanId));
     }
+
+    internal static async Task<Result<DatePlan>> GetForEditorAsync(
+        Guid datePlanId,
+        Guid userId,
+        IDatePlanRepository datePlanRepository,
+        ICoupleRepository coupleRepository)
+    {
+        Result<DatePlan> accessResult = await GetForUserAsync(
+            datePlanId,
+            userId,
+            datePlanRepository,
+            coupleRepository);
+
+        if (accessResult.IsFailure)
+        {
+            return accessResult;
+        }
+
+        DatePlan datePlan = accessResult.Value;
+        return datePlan.PartnerWhoPlannedId == userId || datePlan.IsCollaborative
+            ? datePlan
+            : Result.Failure<DatePlan>(DatePlanErrors.OnlyPlannerCanEdit);
+    }
 }

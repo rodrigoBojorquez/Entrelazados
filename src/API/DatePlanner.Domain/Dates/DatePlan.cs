@@ -1,4 +1,5 @@
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.Dates.Events;
 
 namespace DatePlanner.Domain.Dates;
 
@@ -13,6 +14,10 @@ public class DatePlan : Entity
     public Guid CoupleId { get; private set; }
 
     public Guid PartnerWhoPlannedId { get; private set; }
+
+    public bool IsCollaborative { get; private set; }
+
+    public DateTime CreatedAtUtc { get; private set; }
 
     public DateOnly? ScheduledFor { get; private set; }
 
@@ -31,10 +36,23 @@ public class DatePlan : Entity
             Id = Guid.NewGuid(),
             CoupleId = coupleId,
             PartnerWhoPlannedId = partnerWhoPlannedId,
+            IsCollaborative = false,
+            CreatedAtUtc = DateTime.UtcNow,
             Status = DateStatus.Planning
         };
 
         return Result.Success(datePlan);
+    }
+
+    public Result SetCollaborativeEditing(bool isCollaborative)
+    {
+        if (Status != DateStatus.Planning)
+        {
+            return Result.Failure(DatePlanErrors.MustBePlanning);
+        }
+
+        IsCollaborative = isCollaborative;
+        return Result.Success();
     }
 
     public Result AddItineraryItem(
@@ -112,6 +130,19 @@ public class DatePlan : Entity
         return Result.Success();
     }
 
+    public Result ReturnToPlanning()
+    {
+        if (Status != DateStatus.Booked)
+        {
+            return Result.Failure(DatePlanErrors.MustBeBookedToReturnToPlanning);
+        }
+
+        ScheduledFor = null;
+        Status = DateStatus.Planning;
+
+        return Result.Success();
+    }
+
     public Result Cancel()
     {
         if (Status is DateStatus.Canceled or DateStatus.Attended)
@@ -132,6 +163,7 @@ public class DatePlan : Entity
         }
 
         Status = DateStatus.Attended;
+        Raise(new DatePlanAttendedDomainEvent(Id, CoupleId));
 
         return Result.Success();
     }

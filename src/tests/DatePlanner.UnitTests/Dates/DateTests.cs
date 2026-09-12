@@ -1,6 +1,7 @@
 using DatePlanner.UnitTests.Abstractions;
 using DatePlanner.Domain.Abstractions;
 using DatePlanner.Domain.Dates;
+using DatePlanner.Domain.Dates.Events;
 using FluentAssertions;
 
 namespace DatePlanner.UnitTests.Dates;
@@ -20,8 +21,21 @@ public class DateTests : BaseTest
         result.Value.CoupleId.Should().Be(_coupleId);
         result.Value.PartnerWhoPlannedId.Should().Be(_plannerId);
         result.Value.Status.Should().Be(DateStatus.Planning);
+        result.Value.IsCollaborative.Should().BeFalse();
+        result.Value.CreatedAtUtc.Should().NotBe(default);
         result.Value.ScheduledFor.Should().BeNull();
         result.Value.Itinerary.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SetCollaborativeEditing_ShouldOptInWhilePlanning()
+    {
+        DatePlan plan = CreatePlan();
+
+        Result result = plan.SetCollaborativeEditing(true);
+
+        result.IsSuccess.Should().BeTrue();
+        plan.IsCollaborative.Should().BeTrue();
     }
 
     [Fact]
@@ -198,6 +212,32 @@ public class DateTests : BaseTest
         plan.ScheduledFor.Should().Be(originalDate);
     }
 
+    [Fact]
+    public void ReturnToPlanning_ShouldReopenBookedPlan_AndClearScheduledDate()
+    {
+        DatePlan plan = CreateBookedPlan();
+
+        Result result = plan.ReturnToPlanning();
+
+        result.IsSuccess.Should().BeTrue();
+        plan.Status.Should().Be(DateStatus.Planning);
+        plan.ScheduledFor.Should().BeNull();
+        plan.Itinerary.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void ReturnToPlanning_ShouldRejectPlanThatIsNotBooked()
+    {
+        DatePlan plan = CreatePlan();
+
+        Result result = plan.ReturnToPlanning();
+
+        result.Error.ShouldHaveCode(
+            "DatePlan.MustBeBookedToReturnToPlanning",
+            ErrorType.Conflict);
+        plan.Status.Should().Be(DateStatus.Planning);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -244,6 +284,10 @@ public class DateTests : BaseTest
 
         result.IsSuccess.Should().BeTrue();
         plan.Status.Should().Be(DateStatus.Attended);
+        DatePlanAttendedDomainEvent domainEvent =
+            AssertDomainEventWasPublished<DatePlanAttendedDomainEvent>(plan);
+        domainEvent.DatePlanId.Should().Be(plan.Id);
+        domainEvent.CoupleId.Should().Be(plan.CoupleId);
     }
 
     [Theory]

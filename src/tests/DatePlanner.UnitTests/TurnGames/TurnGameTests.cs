@@ -4,6 +4,7 @@ using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.TurnGames;
 using DatePlanner.Domain.TurnGames.Events;
 using DatePlanner.Domain.TurnGames.Rounds;
+using DatePlanner.Domain.TurnGames.Rules;
 using DatePlanner.Domain.TurnGames.Rules.HigherNumberWins;
 using DatePlanner.Domain.TurnGames.Rules.RockPaperScissors;
 using FluentAssertions;
@@ -27,10 +28,43 @@ public class TurnGameTests : BaseTest
         result.Value.PlayerOneId.Should().Be(couple.PartnerOneId);
         result.Value.PlayerTwoId.Should().Be(couple.PartnerTwoId);
         result.Value.GameType.Should().Be(gameType);
+        result.Value.Purpose.Should().Be(TurnGamePurpose.Casual);
         result.Value.Status.Should().Be(TurnGameStatus.Ready);
         result.Value.Rounds.Should().BeEmpty();
         result.Value.WinnerId.Should().BeNull();
         result.Value.CreatedAtUtc.Should().NotBe(default);
+    }
+
+    [Fact]
+    public void Schedule_ShouldWaitForFirstGameSelection()
+    {
+        Couple couple = CreateCouple();
+
+        Result<TurnGame> result = TurnGame.Schedule(couple);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.GameType.Should().BeNull();
+        result.Value.Purpose.Should().Be(TurnGamePurpose.PlanningDecision);
+        result.Value.Status.Should().Be(TurnGameStatus.AwaitingSelection);
+        result.Value.StartRound().Error.ShouldHaveCode(
+            "TurnGame.GameTypeMustBeSelected",
+            ErrorType.Conflict);
+    }
+
+    [Fact]
+    public void SelectGameType_ShouldAcceptOnlyTheFirstSelection()
+    {
+        TurnGame game = TurnGame.Schedule(CreateCouple()).Value;
+
+        Result firstSelection = game.SelectGameType(TurnGameType.HigherNumberWins);
+        Result secondSelection = game.SelectGameType(TurnGameType.RockPaperScissors);
+
+        firstSelection.IsSuccess.Should().BeTrue();
+        game.GameType.Should().Be(TurnGameType.HigherNumberWins);
+        game.Status.Should().Be(TurnGameStatus.Ready);
+        secondSelection.Error.ShouldHaveCode(
+            "TurnGame.GameTypeAlreadySelected",
+            ErrorType.Conflict);
     }
 
     [Fact]
@@ -189,6 +223,118 @@ public class TurnGameTests : BaseTest
         game.WinnerId.Should().BeNull();
     }
 
+    [Theory]
+    [InlineData(TurnGameType.RockPaperScissors)]
+    [InlineData(TurnGameType.HigherNumberWins)]
+    public void Play_ShouldRejectMove_WhenRoundTimerHasExpired(TurnGameType gameType)
+    {
+        TurnGame game = CreateStartedGame(gameType);
+        TurnGameRound round = game.Rounds.Single();
+        ITurnGameMove move = gameType == TurnGameType.RockPaperScissors
+            ? RockPaperScissorsMove.Rock
+            : HigherNumberMove.One;
+
+        Result result = game.Play(
+            game.PlayerOneId,
+            move,
+            round.StartedAtUtc.Add(TurnGame.TimedRoundDuration));
+
+        result.Error.ShouldHaveCode("TurnGame.RoundMoveTimeExpired", ErrorType.Conflict);
+        round.Moves.Should().BeEmpty();
+        round.Status.Should().Be(TurnGameRoundStatus.InProgress);
+    }
+
+    [Fact]
+    public void ExpireRound_ShouldRejectExpiration_BeforeTimerEnds()
+    {
+        TurnGame game = CreateStartedGame(TurnGameType.RockPaperScissors);
+        TurnGameRound round = game.Rounds.Single();
+
+        Result result = game.ExpireRound(
+            round.Id,
+            round.StartedAtUtc.Add(TurnGame.TimedRoundDuration).AddTicks(-1));
+
+        result.Error.ShouldHaveCode("TurnGame.RoundTimerStillRunning", ErrorType.Conflict);
+        round.Status.Should().Be(TurnGameRoundStatus.InProgress);
+    }
+
+    [Theory]
+    [InlineData(TurnGameType.RockPaperScissors)]
+    [InlineData(TurnGameType.HigherNumberWins)]
+    public void ExpireRound_ShouldFinishAsDraw_WhenNeitherPlayerMoved(TurnGameType gameType)
+    {
+        TurnGame game = CreateStartedGame(gameType);
+        TurnGameRound round = game.Rounds.Single();
+        DateTime deadline = round.StartedAtUtc.Add(TurnGame.TimedRoundDuration);
+
+        Result result = game.ExpireRound(round.Id, deadline);
+
+        result.IsSuccess.Should().BeTrue();
+        round.Status.Should().Be(TurnGameRoundStatus.Finished);
+        round.WinnerId.Should().BeNull();
+        round.FinishedAtUtc.Should().Be(deadline);
+    }
+
+    [Theory]
+    [InlineData(TurnGameType.RockPaperScissors)]
+    [InlineData(TurnGameType.HigherNumberWins)]
+    public void ExpireRound_ShouldAwardRoundToOnlyPlayerWhoMoved(TurnGameType gameType)
+    {
+        TurnGame game = CreateStartedGame(gameType);
+        TurnGameRound round = game.Rounds.Single();
+        ITurnGameMove move = gameType == TurnGameType.RockPaperScissors
+            ? RockPaperScissorsMove.Paper
+            : HigherNumberMove.Six;
+        game.Play(game.PlayerTwoId, move, round.StartedAtUtc.AddSeconds(1));
+
+        Result result = game.ExpireRound(
+            round.Id,
+            round.StartedAtUtc.Add(TurnGame.TimedRoundDuration));
+
+        result.IsSuccess.Should().BeTrue();
+        round.Status.Should().Be(TurnGameRoundStatus.Finished);
+        round.WinnerId.Should().Be(game.PlayerTwoId);
+    }
+
+    [Fact]
+    public void ExpireRound_ShouldBeIdempotent_WhenRoundAlreadyFinished()
+    {
+        TurnGame game = CreateStartedGame(TurnGameType.RockPaperScissors);
+        TurnGameRound round = game.Rounds.Single();
+        DateTime deadline = round.StartedAtUtc.Add(TurnGame.TimedRoundDuration);
+        game.ExpireRound(round.Id, deadline);
+
+        Result result = game.ExpireRound(round.Id, deadline.AddSeconds(1));
+
+        result.IsSuccess.Should().BeTrue();
+        game.Rounds.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void ExpireRound_ShouldFinishGame_WhenOnlyPlayerReachesTwoWins()
+    {
+        TurnGame game = CreateStartedGame(TurnGameType.RockPaperScissors);
+        CompleteRockPaperScissorsRound(
+            game,
+            RockPaperScissorsMove.Rock,
+            RockPaperScissorsMove.Scissors);
+        game.StartRound();
+        TurnGameRound round = game.Rounds.Last();
+        game.Play(
+            game.PlayerOneId,
+            RockPaperScissorsMove.Paper,
+            round.StartedAtUtc.AddSeconds(1));
+
+        game.ExpireRound(
+            round.Id,
+            round.StartedAtUtc.Add(TurnGame.TimedRoundDuration));
+
+        game.Status.Should().Be(TurnGameStatus.Finished);
+        game.WinnerId.Should().Be(game.PlayerOneId);
+        game.DomainEvents.OfType<TurnGameFinishedDomainEvent>()
+            .Should().ContainSingle().Which.WinnerId.Should().Be(game.PlayerOneId);
+    }
+
     [Fact]
     public void StartRound_ShouldStartNextNumberedRound_AfterPreviousRoundFinishes()
     {
@@ -239,6 +385,7 @@ public class TurnGameTests : BaseTest
         finished.TurnGameId.Should().Be(game.Id);
         finished.CoupleId.Should().Be(game.CoupleId);
         finished.WinnerId.Should().Be(game.PlayerOneId);
+        finished.Purpose.Should().Be(TurnGamePurpose.Casual);
     }
 
     [Fact]

@@ -22,6 +22,8 @@ public sealed class GetDatePlanQueryHandler(IDbConnectionFactory dbConnectionFac
                  dp.id AS {nameof(DatePlanRow.Id)},
                  dp.couple_id AS {nameof(DatePlanRow.CoupleId)},
                  dp.partner_who_planned_id AS {nameof(DatePlanRow.PartnerWhoPlannedId)},
+                 dp.is_collaborative AS {nameof(DatePlanRow.IsCollaborative)},
+                 dp.created_at_utc AS {nameof(DatePlanRow.CreatedAtUtc)},
                  dp.scheduled_for AS {nameof(DatePlanRow.ScheduledFor)},
                  dp.status AS {nameof(DatePlanRow.Status)}
              FROM dateplanner.date_plans dp
@@ -61,6 +63,8 @@ public sealed class GetDatePlanQueryHandler(IDbConnectionFactory dbConnectionFac
             datePlan.Id,
             datePlan.CoupleId,
             datePlan.PartnerWhoPlannedId,
+            datePlan.IsCollaborative,
+            datePlan.CreatedAtUtc,
             datePlan.ScheduledFor,
             Enum.Parse<DateStatus>(datePlan.Status),
             itinerary);
@@ -71,6 +75,8 @@ public sealed class GetDatePlanQueryHandler(IDbConnectionFactory dbConnectionFac
         public Guid Id { get; init; }
         public Guid CoupleId { get; init; }
         public Guid PartnerWhoPlannedId { get; init; }
+        public bool IsCollaborative { get; init; }
+        public DateTime CreatedAtUtc { get; init; }
         public DateOnly? ScheduledFor { get; init; }
         public string Status { get; init; } = string.Empty;
     }

@@ -13,5 +13,18 @@ internal sealed class TurnGameRepository(DatePlannerDbContext dbContext) : ITurn
             .AsSplitQuery()
             .FirstOrDefaultAsync(turnGame => turnGame.Id == turnGameId);
 
+    public async Task<TurnGame?> GetActivePlanningGameByCoupleIdAsync(Guid coupleId)
+    {
+        TurnGame? localGame = dbContext.TurnGames.Local.FirstOrDefault(turnGame =>
+            turnGame.CoupleId == coupleId &&
+            turnGame.Purpose == TurnGamePurpose.PlanningDecision &&
+            turnGame.Status != TurnGameStatus.Finished);
+
+        return localGame ?? await dbContext.TurnGames.FirstOrDefaultAsync(turnGame =>
+            turnGame.CoupleId == coupleId &&
+            turnGame.Purpose == TurnGamePurpose.PlanningDecision &&
+            turnGame.Status != TurnGameStatus.Finished);
+    }
+
     public void Insert(TurnGame turnGame) => dbContext.TurnGames.Add(turnGame);
 }

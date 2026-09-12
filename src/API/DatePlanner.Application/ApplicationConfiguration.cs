@@ -1,6 +1,7 @@
 using DatePlanner.Application.Common.Behaviors;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using DatePlanner.Application.TurnGames.ScheduleTurnGame;
 
 namespace DatePlanner.Application;
 
@@ -19,6 +20,7 @@ public static class ApplicationConfiguration
         });
 
         services.AddValidatorsFromAssembly(AssemblyReference.Assembly, includeInternalTypes: true);
+        services.AddScoped<TurnGameScheduler>();
 
         return services;
     }

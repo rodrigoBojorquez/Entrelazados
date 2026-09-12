@@ -8,7 +8,8 @@ namespace DatePlanner.Application.TurnGames.PlayTurnGameMove;
 
 public sealed class PlayTurnGameMoveCommandHandler(
     ITurnGameRepository turnGameRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : IRequestHandler<PlayTurnGameMoveCommand, Result>
 {
     public async Task<Result> Handle(
@@ -26,8 +27,14 @@ public sealed class PlayTurnGameMoveCommandHandler(
         }
 
         TurnGame turnGame = accessResult.Value;
+
+        if (turnGame.GameType is not TurnGameType gameType)
+        {
+            return Result.Failure(TurnGameErrors.GameTypeMustBeSelected);
+        }
+
         Result<ITurnGameMove> moveResult = TurnGameMoveFactory.Create(
-            turnGame.GameType,
+            gameType,
             request.MoveCode);
 
         if (moveResult.IsFailure)
@@ -35,7 +42,10 @@ public sealed class PlayTurnGameMoveCommandHandler(
             return Result.Failure(moveResult.Error);
         }
 
-        Result result = turnGame.Play(request.UserId, moveResult.Value);
+        Result result = turnGame.Play(
+            request.UserId,
+            moveResult.Value,
+            timeProvider.GetUtcNow().UtcDateTime);
 
         if (result.IsFailure)
         {

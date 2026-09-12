@@ -6,8 +6,9 @@ namespace DatePlanner.Infrastructure.Couples;
 
 internal sealed class CoupleRepository(DatePlannerDbContext dbContext) : ICoupleRepository
 {
-    public Task<Couple?> GetCoupleByIdAsync(Guid coupleId) =>
-        dbContext.Couples.FirstOrDefaultAsync(couple => couple.Id == coupleId);
+    public async Task<Couple?> GetCoupleByIdAsync(Guid coupleId) =>
+        dbContext.Couples.Local.FirstOrDefault(couple => couple.Id == coupleId)
+        ?? await dbContext.Couples.FirstOrDefaultAsync(couple => couple.Id == coupleId);
 
     public Task<Couple?> GetCoupleByUserIdAsync(Guid userId) =>
         dbContext.Couples.FirstOrDefaultAsync(couple =>

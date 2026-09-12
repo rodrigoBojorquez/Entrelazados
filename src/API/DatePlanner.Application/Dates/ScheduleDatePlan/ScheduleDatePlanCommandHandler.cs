@@ -16,7 +16,7 @@ public sealed class ScheduleDatePlanCommandHandler(
         ScheduleDatePlanCommand request,
         CancellationToken cancellationToken)
     {
-        Result<DatePlan> accessResult = await DatePlanAccess.GetForUserAsync(
+        Result<DatePlan> accessResult = await DatePlanAccess.GetForEditorAsync(
             request.DatePlanId,
             request.UserId,
             datePlanRepository,

@@ -19,4 +19,12 @@ public static class CoupleErrors
     public static Error UserAlreadyHasPartner(Guid userId) => Error.Conflict(
         "Couple.UserAlreadyHasPartner",
         $"El usuario {userId} ya pertenece a una pareja activa.");
+
+    public static Error PartnerNotFound(Guid userId) => Error.NotFound(
+        "Couple.PartnerNotFound",
+        $"El usuario {userId} no tiene una pareja activa.");
+
+    public static Error RelationshipAlreadyEnded(Guid coupleId) => Error.Conflict(
+        "Couple.RelationshipAlreadyEnded",
+        $"La relación {coupleId} ya fue desenlazada.");
 }

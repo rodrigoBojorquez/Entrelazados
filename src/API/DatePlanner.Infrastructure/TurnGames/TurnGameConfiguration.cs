@@ -48,18 +48,28 @@ internal sealed class TurnGameConfiguration : IEntityTypeConfiguration<TurnGame>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(game => game.CoupleId);
+        builder.HasIndex(game => game.CoupleId)
+            .IsUnique()
+            .HasDatabaseName("ix_turn_games_active_planning_decision")
+            .HasFilter("purpose = 'PlanningDecision' AND status <> 'Finished'");
         builder.HasIndex(game => game.PlayerOneId);
         builder.HasIndex(game => game.PlayerTwoId);
 
         builder.Property(game => game.GameType)
             .HasConversion<string>()
+            .HasMaxLength(32);
+
+        builder.Property(game => game.Purpose)
+            .HasConversion<string>()
             .HasMaxLength(32)
+            .HasDefaultValue(TurnGamePurpose.Casual)
             .IsRequired();
 
         builder.Property(game => game.Status)
             .HasConversion<string>()
             .HasMaxLength(24)
-            .IsRequired();
+            .IsRequired()
+            .IsConcurrencyToken();
 
         builder.Property(game => game.CreatedAtUtc)
             .HasColumnType("timestamp with time zone");

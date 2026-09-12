@@ -23,6 +23,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
+using Quartz;
 
 namespace DatePlanner.Infrastructure;
 
@@ -43,6 +44,7 @@ public static class InfrastructureConfiguration
         services.TryAddScoped<IDbConnectionFactory, DbConnectionFactory>();
         services.TryAddScoped<IPasswordHasher, PasswordHasher>();
         services.TryAddScoped<IDomainEventsDispatcher, DomainEventsDispatcher>();
+        services.TryAddSingleton(TimeProvider.System);
 
         SqlMapper.AddTypeHandler(new GenericArrayHandler<string>());
         
@@ -60,6 +62,18 @@ public static class InfrastructureConfiguration
         services.AddScoped<ICoupleRepository, CoupleRepository>();
         services.AddScoped<IDatePlanRepository, DatePlanRepository>();
         services.AddScoped<ITurnGameRepository, TurnGameRepository>();
+        services.AddScoped<DatePlanAttendanceProcessor>();
+
+        var attendanceJobKey = new JobKey(nameof(DatePlanAttendanceJob));
+        services.AddQuartz(quartz =>
+        {
+            quartz.AddJob<DatePlanAttendanceJob>(options => options.WithIdentity(attendanceJobKey));
+            quartz.AddTrigger(options => options
+                .ForJob(attendanceJobKey)
+                .WithIdentity($"{nameof(DatePlanAttendanceJob)}-daily")
+                .WithCronSchedule("0 5 0 * * ?"));
+        });
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
 
         return services;
     }

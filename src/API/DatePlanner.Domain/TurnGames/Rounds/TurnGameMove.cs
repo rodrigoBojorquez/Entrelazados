@@ -22,7 +22,8 @@ public class TurnGameMove : Entity
         Guid roundId,
         Guid playerId,
         int sequence,
-        string moveCode)
+        string moveCode,
+        DateTime playedAtUtc)
     {
         TurnGameMove move = new TurnGameMove
         {
@@ -30,8 +31,8 @@ public class TurnGameMove : Entity
             TurnGameRoundId = roundId,
             PlayerId = playerId,
             Sequence = sequence,
-            Code =  moveCode,
-            PlayedAtUtc = DateTime.UtcNow
+            Code = moveCode,
+            PlayedAtUtc = playedAtUtc
         };
 
         return move;

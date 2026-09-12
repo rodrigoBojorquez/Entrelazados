@@ -30,6 +30,10 @@ internal sealed class DatePlanConfiguration : IEntityTypeConfiguration<DatePlan>
         builder.HasIndex(datePlan => datePlan.CoupleId);
         builder.HasIndex(datePlan => datePlan.PartnerWhoPlannedId);
 
+        builder.Property(datePlan => datePlan.CreatedAtUtc)
+            .HasColumnType("timestamp with time zone")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
         builder.Property(datePlan => datePlan.Status)
             .HasConversion<string>()
             .HasMaxLength(24)

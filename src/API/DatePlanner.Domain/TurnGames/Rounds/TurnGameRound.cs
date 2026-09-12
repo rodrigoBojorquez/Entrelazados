@@ -45,7 +45,8 @@ public class TurnGameRound : Entity
         Guid playerId,
         ITurnGameMove submittedMove,
         TurnGamePlayers players,
-        ITurnGameRules rules)
+        ITurnGameRules rules,
+        DateTime playedAtUtc)
     {
         if (Status != TurnGameRoundStatus.InProgress)
         {
@@ -72,16 +73,36 @@ public class TurnGameRound : Entity
             Id,
             playerId,
             _moves.Count + 1,
-            move));
+            move,
+            playedAtUtc));
 
         RoundDecision decision = rules.EvaluateRound(CreateMoveViews(players));
 
         if (decision.Kind != RoundDecisionKind.Pending)
         {
-            Complete(decision, players);
+            Complete(decision, players, playedAtUtc);
         }
 
         return Result.Success();
+    }
+
+    internal void Expire(TurnGamePlayers players, DateTime expiredAtUtc)
+    {
+        if (Status != TurnGameRoundStatus.InProgress)
+        {
+            return;
+        }
+
+        List<MoveView> moves = CreateMoveViews(players);
+        RoundDecision decision = moves.Count switch
+        {
+            0 => RoundDecision.Draw(),
+            1 => RoundDecision.WonBy(moves[0].Player),
+            _ => throw new InvalidOperationException(
+                "A timed round with both moves should already be finished.")
+        };
+
+        Complete(decision, players, expiredAtUtc);
     }
 
     internal RoundView ToView(TurnGamePlayers players)
@@ -123,7 +144,8 @@ public class TurnGameRound : Entity
 
     private void Complete(
         RoundDecision decision,
-        TurnGamePlayers players)
+        TurnGamePlayers players,
+        DateTime finishedAtUtc)
     {
         if (decision.Kind == RoundDecisionKind.Pending)
         {
@@ -135,6 +157,6 @@ public class TurnGameRound : Entity
             : null;
 
         Status = TurnGameRoundStatus.Finished;
-        FinishedAtUtc = DateTime.UtcNow;
+        FinishedAtUtc = finishedAtUtc;
     }
 };

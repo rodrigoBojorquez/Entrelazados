@@ -45,6 +45,14 @@ public static class DatePlanErrors
         "DatePlan.MustBeBookedToAttend",
         "Solo una cita programada puede marcarse como atendida.");
 
+    public static Error MustBeBookedToReturnToPlanning => Error.Conflict(
+        "DatePlan.MustBeBookedToReturnToPlanning",
+        "Solo una cita programada puede volver al estado de planeación.");
+
+    public static Error OnlyPlannerCanEdit => Error.Forbidden(
+        "DatePlan.OnlyPlannerCanEdit",
+        "Solo la persona encargada puede editar este plan mientras la edición colaborativa esté desactivada.");
+
     public static Error
         EndTimePrecedesStartTime => Error.Problem(
         "TimeRange.EndTimePrecedesStartTime", 

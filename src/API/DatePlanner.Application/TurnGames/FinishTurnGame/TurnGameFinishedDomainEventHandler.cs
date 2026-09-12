@@ -15,6 +15,12 @@ public sealed class TurnGameFinishedDomainEventHandler(IDatePlanRepository dateP
         CancellationToken cancellationToken)
     {
         TurnGameFinishedDomainEvent domainEvent = notification.DomainEvent;
+
+        if (domainEvent.Purpose != Domain.TurnGames.TurnGamePurpose.PlanningDecision)
+        {
+            return Task.CompletedTask;
+        }
+
         Result<DatePlan> result = DatePlan.Create(domainEvent.CoupleId, domainEvent.WinnerId);
 
         if (result.IsFailure)

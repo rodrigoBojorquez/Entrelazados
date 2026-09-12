@@ -10,6 +10,8 @@ public sealed record DatePlanResponse(
     Guid Id,
     Guid CoupleId,
     Guid PartnerWhoPlannedId,
+    bool IsCollaborative,
+    DateTime CreatedAtUtc,
     DateOnly? ScheduledFor,
     DateStatus Status,
     IReadOnlyCollection<ItineraryItemResponse> Itinerary);

@@ -123,6 +123,16 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("couple_id");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("IsCollaborative")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_collaborative");
+
                     b.Property<Guid>("PartnerWhoPlannedId")
                         .HasColumnType("uuid")
                         .HasColumnName("partner_who_planned_id");
@@ -301,7 +311,6 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                         .HasColumnName("finished_at_utc");
 
                     b.Property<string>("GameType")
-                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("game_type");
@@ -314,11 +323,20 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("player_two_id");
 
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasDefaultValue("Casual")
+                        .HasColumnName("purpose");
+
                     b.Property<DateTime?>("StartedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("started_at_utc");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)")
@@ -332,7 +350,9 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                         .HasName("pk_turn_games");
 
                     b.HasIndex("CoupleId")
-                        .HasDatabaseName("ix_turn_games_couple_id");
+                        .IsUnique()
+                        .HasDatabaseName("ix_turn_games_active_planning_decision")
+                        .HasFilter("purpose = 'PlanningDecision' AND status <> 'Finished'");
 
                     b.HasIndex("PlayerOneId")
                         .HasDatabaseName("ix_turn_games_player_one_id");

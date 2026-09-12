@@ -7,11 +7,13 @@ public sealed class TurnGameFinishedDomainEvent : DomainEvent
     internal TurnGameFinishedDomainEvent(
         Guid turnGameId,
         Guid coupleId,
-        Guid winnerId)
+        Guid winnerId,
+        TurnGamePurpose purpose)
     {
         TurnGameId = turnGameId;
         CoupleId = coupleId;
         WinnerId = winnerId;
+        Purpose = purpose;
     }
 
     public Guid TurnGameId { get; }
@@ -19,4 +21,6 @@ public sealed class TurnGameFinishedDomainEvent : DomainEvent
     public Guid CoupleId { get; }
 
     public Guid WinnerId { get; }
+
+    public TurnGamePurpose Purpose { get; }
 }

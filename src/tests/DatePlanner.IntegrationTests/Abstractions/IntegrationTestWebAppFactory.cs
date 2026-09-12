@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using DatePlanner.Infrastructure.Database;
+using DatePlanner.Application.Common.Notifications;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.PostgreSql;
 
 namespace DatePlanner.IntegrationTests.Abstractions;
@@ -21,6 +23,13 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTests");
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<ITurnGameNotifier>();
+            services.AddSingleton<RecordingTurnGameNotifier>();
+            services.AddSingleton<ITurnGameNotifier>(provider =>
+                provider.GetRequiredService<RecordingTurnGameNotifier>());
+        });
     }
     
     public async Task InitializeAsync()

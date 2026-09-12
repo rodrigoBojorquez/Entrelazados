@@ -1,4 +1,5 @@
 using DatePlanner.Domain.Abstractions;
+using DatePlanner.Domain.Couples.Events;
 
 namespace DatePlanner.Domain.Couples;
 
@@ -44,6 +45,22 @@ public class Couple : Entity
             IsActive = true,
         };
 
+        couple.Raise(new RelationshipBeganDomainEvent(
+            couple.Id,
+            couple.PartnerOneId,
+            couple.PartnerTwoId));
+
         return couple;
+    }
+
+    public Result EndRelationship()
+    {
+        if (!IsActive)
+        {
+            return Result.Failure(CoupleErrors.RelationshipAlreadyEnded(Id));
+        }
+
+        IsActive = false;
+        return Result.Success();
     }
 }

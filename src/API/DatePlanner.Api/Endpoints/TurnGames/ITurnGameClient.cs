@@ -7,4 +7,10 @@ public interface ITurnGameClient
     Task TurnGameUpdated(TurnGameResponse turnGame);
 
     Task TurnGameFinished(TurnGameResponse turnGame);
+
+    Task TurnGameScheduled(ScheduledTurnGameNotification notification);
+
+    Task TurnGameSelected(TurnGameResponse turnGame);
+
+    Task TurnGamePresenceChanged(TurnGamePresenceResponse presence);
 }

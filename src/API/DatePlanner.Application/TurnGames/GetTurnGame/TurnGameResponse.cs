@@ -7,10 +7,12 @@ public sealed record TurnGameResponse(
     Guid CoupleId,
     Guid PlayerOneId,
     Guid PlayerTwoId,
-    TurnGameType GameType,
+    TurnGameType? GameType,
+    TurnGamePurpose Purpose,
     TurnGameStatus Status,
     Guid? WinnerId,
     DateTime CreatedAtUtc,
     DateTime? StartedAtUtc,
     DateTime? FinishedAtUtc,
+    DateTime ServerTimeUtc,
     IReadOnlyCollection<TurnGameRoundResponse> Rounds);

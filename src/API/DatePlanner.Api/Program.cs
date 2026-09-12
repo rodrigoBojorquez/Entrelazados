@@ -4,6 +4,7 @@ using DatePlanner.Api.Common.Extensions;
 using DatePlanner.Api.Common.Middleware;
 using DatePlanner.Api.Endpoints.TurnGames;
 using DatePlanner.Application;
+using DatePlanner.Application.Common.Notifications;
 using DatePlanner.Infrastructure;
 using DatePlanner.Infrastructure.Common.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -29,6 +30,8 @@ builder.Services
         options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddSingleton<IUserIdProvider, SignalRUserIdProvider>();
+builder.Services.AddSingleton<TurnGamePresenceTracker>();
+builder.Services.AddSingleton<ITurnGameNotifier, SignalRTurnGameNotifier>();
 
 builder.Services.PostConfigure<JwtBearerOptions>(
     JwtBearerDefaults.AuthenticationScheme,

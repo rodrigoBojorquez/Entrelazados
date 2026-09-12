@@ -8,7 +8,9 @@ using MediatR;
 
 namespace DatePlanner.Application.TurnGames.GetTurnGame;
 
-public sealed class GetTurnGameQueryHandler(IDbConnectionFactory dbConnectionFactory)
+public sealed class GetTurnGameQueryHandler(
+    IDbConnectionFactory dbConnectionFactory,
+    TimeProvider timeProvider)
     : IRequestHandler<GetTurnGameQuery, Result<TurnGameResponse>>
 {
     public async Task<Result<TurnGameResponse>> Handle(
@@ -25,6 +27,7 @@ public sealed class GetTurnGameQueryHandler(IDbConnectionFactory dbConnectionFac
                  tg.player_one_id AS {nameof(TurnGameRow.PlayerOneId)},
                  tg.player_two_id AS {nameof(TurnGameRow.PlayerTwoId)},
                  tg.game_type AS {nameof(TurnGameRow.GameType)},
+                 tg.purpose AS {nameof(TurnGameRow.Purpose)},
                  tg.status AS {nameof(TurnGameRow.Status)},
                  tg.winner_id AS {nameof(TurnGameRow.WinnerId)},
                  tg.created_at_utc AS {nameof(TurnGameRow.CreatedAtUtc)},
@@ -84,12 +87,16 @@ public sealed class GetTurnGameQueryHandler(IDbConnectionFactory dbConnectionFac
             turnGame.CoupleId,
             turnGame.PlayerOneId,
             turnGame.PlayerTwoId,
-            Enum.Parse<TurnGameType>(turnGame.GameType),
+            string.IsNullOrWhiteSpace(turnGame.GameType)
+                ? null
+                : Enum.Parse<TurnGameType>(turnGame.GameType),
+            Enum.Parse<TurnGamePurpose>(turnGame.Purpose),
             Enum.Parse<TurnGameStatus>(turnGame.Status),
             turnGame.WinnerId,
             turnGame.CreatedAtUtc,
             turnGame.StartedAtUtc,
             turnGame.FinishedAtUtc,
+            timeProvider.GetUtcNow().UtcDateTime,
             rounds
                 .Select(round => MapRound(round, movesByRound[round.Id]))
                 .ToArray());
@@ -122,7 +129,8 @@ public sealed class GetTurnGameQueryHandler(IDbConnectionFactory dbConnectionFac
         public Guid CoupleId { get; init; }
         public Guid PlayerOneId { get; init; }
         public Guid PlayerTwoId { get; init; }
-        public string GameType { get; init; } = string.Empty;
+        public string? GameType { get; init; }
+        public string Purpose { get; init; } = string.Empty;
         public string Status { get; init; } = string.Empty;
         public Guid? WinnerId { get; init; }
         public DateTime CreatedAtUtc { get; init; }

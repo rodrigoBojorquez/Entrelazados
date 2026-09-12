@@ -5,4 +5,5 @@ public enum TurnGameStatus
     Ready = 0,
     InProgress = 1,
     Finished = 2,
+    AwaitingSelection = 3,
 }
