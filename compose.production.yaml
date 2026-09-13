@@ -1,0 +1,70 @@
+name: dateplanner
+
+services:
+  database:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dateplanner_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - dateplanner-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    image: ${DATEPLANNER_API_IMAGE:-dateplanner-api:prod}
+    build:
+      context: .
+      dockerfile: src/API/DatePlanner.Api/Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Database: Host=database;Port=5432;Database=${POSTGRES_DB:-dateplanner_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD in .env.production};Pooling=true
+      Authentication__Key: ${AUTHENTICATION_KEY:?Define AUTHENTICATION_KEY in .env.production}
+      Authentication__Issuer: ${AUTHENTICATION_ISSUER:-Entrelazados}
+      Authentication__Audience: ${AUTHENTICATION_AUDIENCE:-Entrelazados}
+      Authentication__JwtExpireMinutes: ${JWT_EXPIRE_MINUTES:-60}
+      Authentication__RefreshTokenExpireDays: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+    expose:
+      - "8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    image: ${DATEPLANNER_APP_IMAGE:-dateplanner-app:prod}
+    build:
+      context: ./src/app
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  backend:
+
+volumes:
+  dateplanner-postgres-data:
+    name: ${POSTGRES_VOLUME_NAME:?Define POSTGRES_VOLUME_NAME in .env.production}
+    external: true
