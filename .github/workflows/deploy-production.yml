@@ -192,6 +192,18 @@ jobs:
           "${compose[@]}" pull database api app
 
           if ! "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 180; then
+            echo "Deployment diagnostics:" >&2
+            "${compose[@]}" ps --all >&2 || true
+            "${compose[@]}" logs --no-color --tail 200 database api app >&2 || true
+
+            for service in database api app; do
+              container_id=$("${compose[@]}" ps --quiet "$service" 2>/dev/null || true)
+              if test -n "$container_id"; then
+                echo "Health state for $service:" >&2
+                docker inspect --format '{{json .State.Health}}' "$container_id" >&2 || true
+              fi
+            done
+
             if test "$had_previous_release" = true; then
               echo "Deployment failed; restoring the previous image release." >&2
               mv .env.release.previous .env.release
