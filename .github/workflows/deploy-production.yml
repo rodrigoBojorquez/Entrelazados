@@ -227,4 +227,4 @@ jobs:
           test "$health_response" = "healthy"
           swagger_response=$(curl --fail --silent --show-error --retry 5 --retry-delay 3 --retry-all-errors \
             "$base_url/swagger/v1/swagger.json")
-          grep --quiet '"openapi"' <<< "$swagger_response"
+          grep -q '"openapi"' <<< "$swagger_response"
