@@ -18,6 +18,7 @@ jobs:
   verify:
     name: Verify application
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
 
@@ -59,6 +60,7 @@ jobs:
     name: Publish production images
     needs: verify
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
@@ -113,8 +115,10 @@ jobs:
     name: Deploy to VPS
     needs: publish
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
+
     environment:
       name: production
       url: ${{ vars.PUBLIC_URL }}
@@ -129,13 +133,26 @@ jobs:
           SSH_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS }}
         run: |
           set -Eeuo pipefail
+
           install -m 700 -d "$HOME/.ssh"
-          printf '%s' "$SSH_PRIVATE_KEY_BASE64" | base64 --decode > "$HOME/.ssh/dateplanner_deploy"
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/dateplanner_deploy" "$HOME/.ssh/known_hosts"
+
+          printf '%s' "$SSH_PRIVATE_KEY_BASE64" \
+            | base64 --decode \
+            > "$HOME/.ssh/dateplanner_deploy"
+
+          printf '%s\n' "$SSH_KNOWN_HOSTS" \
+            > "$HOME/.ssh/known_hosts"
+
+          chmod 600 \
+            "$HOME/.ssh/dateplanner_deploy" \
+            "$HOME/.ssh/known_hosts"
+
           test -s "$HOME/.ssh/dateplanner_deploy"
           test -s "$HOME/.ssh/known_hosts"
-          ssh-keygen -y -f "$HOME/.ssh/dateplanner_deploy" > /dev/null
+
+          ssh-keygen -y \
+            -f "$HOME/.ssh/dateplanner_deploy" \
+            > /dev/null
 
       - name: Upload Compose definition
         env:
@@ -145,10 +162,26 @@ jobs:
           VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
         run: |
           set -Eeuo pipefail
-          SSH_OPTIONS=(-i "$HOME/.ssh/dateplanner_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+
+          SSH_OPTIONS=(
+            -i "$HOME/.ssh/dateplanner_deploy"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+
           printf -v quoted_deploy_path '%q' "$VPS_DEPLOY_PATH"
-          ssh "${SSH_OPTIONS[@]}" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "mkdir -p $quoted_deploy_path"
-          scp "${SSH_OPTIONS[@]}" -P "$VPS_PORT" compose.production.yaml "$VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/compose.production.yaml.next"
+
+          ssh \
+            "${SSH_OPTIONS[@]}" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            "mkdir -p $quoted_deploy_path"
+
+          scp \
+            "${SSH_OPTIONS[@]}" \
+            -P "$VPS_PORT" \
+            compose.production.yaml \
+            "$VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/compose.production.yaml.next"
 
       - name: Pull and start release
         env:
@@ -158,11 +191,22 @@ jobs:
           VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
         run: |
           set -Eeuo pipefail
-          SSH_OPTIONS=(-i "$HOME/.ssh/dateplanner_deploy" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-          ssh "${SSH_OPTIONS[@]}" -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" bash -s -- \
+
+          SSH_OPTIONS=(
+            -i "$HOME/.ssh/dateplanner_deploy"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+
+          ssh \
+            "${SSH_OPTIONS[@]}" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            bash -s -- \
             "$VPS_DEPLOY_PATH" \
             "${API_IMAGE}:${GITHUB_SHA}" \
             "${APP_IMAGE}:${GITHUB_SHA}" <<'REMOTE_SCRIPT'
+
           set -Eeuo pipefail
 
           deploy_path=$1
@@ -170,51 +214,72 @@ jobs:
           app_image=$3
 
           cd "$deploy_path"
+
           test -f .env.production || {
             echo "Missing $deploy_path/.env.production" >&2
             exit 1
           }
 
-          mv compose.production.yaml.next compose.production.yaml
+          echo "Installing Compose definition..."
 
-          had_previous_release=false
+          mv \
+            compose.production.yaml.next \
+            compose.production.yaml
+
+          #
+          # Preserve the previous release so it can be restored
+          # if the HTTP verification fails.
+          #
+          rm -f .env.release.previous
+
           if test -f .env.release; then
             cp .env.release .env.release.previous
-            had_previous_release=true
           fi
 
-          printf 'DATEPLANNER_API_IMAGE=%s\nDATEPLANNER_APP_IMAGE=%s\n' \
-            "$api_image" "$app_image" > .env.release
+          #
+          # Register the new immutable image versions.
+          #
+          printf \
+            'DATEPLANNER_API_IMAGE=%s\nDATEPLANNER_APP_IMAGE=%s\n' \
+            "$api_image" \
+            "$app_image" \
+            > .env.release
+
           chmod 600 .env.release
 
-          compose=(docker compose --env-file .env.production --env-file .env.release -f compose.production.yaml)
+          compose=(
+            docker compose
+            --env-file .env.production
+            --env-file .env.release
+            -f compose.production.yaml
+          )
+
+          echo "Validating Compose configuration..."
+
           "${compose[@]}" config --quiet
+
+          echo "Pulling release images..."
+
           "${compose[@]}" pull database api app
 
-          if ! "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 180; then
-            echo "Deployment diagnostics:" >&2
-            "${compose[@]}" ps --all >&2 || true
-            "${compose[@]}" logs --no-color --tail 200 database api app >&2 || true
+          echo "Starting release..."
 
-            for service in database api app; do
-              container_id=$("${compose[@]}" ps --quiet "$service" 2>/dev/null || true)
-              if test -n "$container_id"; then
-                echo "Health state for $service:" >&2
-                docker inspect --format '{{json .State.Health}}' "$container_id" >&2 || true
-              fi
-            done
+          #
+          # IMPORTANT:
+          #
+          # No --wait.
+          # No --wait-timeout.
+          # No Docker health-state verification.
+          #
+          "${compose[@]}" up \
+            -d \
+            --no-build \
+            --remove-orphans
 
-            if test "$had_previous_release" = true; then
-              echo "Deployment failed; restoring the previous image release." >&2
-              mv .env.release.previous .env.release
-              "${compose[@]}" pull api app
-              "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 180
-            fi
-            exit 1
-          fi
+          echo
+          echo "Containers after deployment:"
+          "${compose[@]}" ps --all
 
-          rm -f .env.release.previous
-          "${compose[@]}" ps
           REMOTE_SCRIPT
 
       - name: Verify public endpoints
@@ -222,9 +287,183 @@ jobs:
           PUBLIC_URL: ${{ vars.PUBLIC_URL }}
         run: |
           set -Eeuo pipefail
+
           base_url=${PUBLIC_URL%/}
-          health_response=$(curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "$base_url/health")
-          test "$health_response" = "healthy"
-          swagger_response=$(curl --fail --silent --show-error --retry 5 --retry-delay 3 --retry-all-errors \
-            "$base_url/swagger/v1/swagger.json")
-          grep -q '"openapi"' <<< "$swagger_response"
+
+          echo "Waiting for application..."
+          echo "Checking $base_url/health"
+
+          health_response=$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --retry 12 \
+              --retry-delay 5 \
+              --retry-all-errors \
+              "$base_url/health"
+          )
+
+          echo "Health response: $health_response"
+
+          if test "$health_response" != "healthy"; then
+            echo "Unexpected health response: $health_response" >&2
+            exit 1
+          fi
+
+          echo "Checking Swagger/OpenAPI..."
+
+          swagger_response=$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --retry 5 \
+              --retry-delay 3 \
+              --retry-all-errors \
+              "$base_url/swagger/v1/swagger.json"
+          )
+
+          if ! grep -q '"openapi"' <<< "$swagger_response"; then
+            echo "Swagger/OpenAPI endpoint returned an invalid response." >&2
+            exit 1
+          fi
+
+          echo "Production endpoints verified successfully."
+
+      - name: Roll back failed release
+        if: failure()
+        env:
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
+        run: |
+          set -Eeuo pipefail
+
+          SSH_OPTIONS=(
+            -i "$HOME/.ssh/dateplanner_deploy"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+
+          ssh \
+            "${SSH_OPTIONS[@]}" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            bash -s -- \
+            "$VPS_DEPLOY_PATH" <<'REMOTE_SCRIPT'
+
+          set -Eeuo pipefail
+
+          deploy_path=$1
+
+          cd "$deploy_path"
+
+          if ! test -f .env.release.previous; then
+            echo "No previous release available. Nothing to roll back." >&2
+
+            docker compose \
+              --env-file .env.production \
+              --env-file .env.release \
+              -f compose.production.yaml \
+              ps --all || true
+
+            docker compose \
+              --env-file .env.production \
+              --env-file .env.release \
+              -f compose.production.yaml \
+              logs \
+              --no-color \
+              --tail 200 \
+              database api app || true
+
+            exit 0
+          fi
+
+          echo "Deployment failed."
+          echo "Restoring previous release..."
+
+          mv \
+            .env.release.previous \
+            .env.release
+
+          chmod 600 .env.release
+
+          compose=(
+            docker compose
+            --env-file .env.production
+            --env-file .env.release
+            -f compose.production.yaml
+          )
+
+          echo "Pulling previous API/frontend images..."
+
+          "${compose[@]}" pull api app
+
+          echo "Starting previous release..."
+
+          "${compose[@]}" up \
+            -d \
+            --no-build \
+            --remove-orphans
+
+          echo
+          echo "Rollback completed."
+
+          "${compose[@]}" ps --all
+
+          echo
+          echo "Recent logs:"
+
+          "${compose[@]}" logs \
+            --no-color \
+            --tail 100 \
+            database api app || true
+
+          REMOTE_SCRIPT
+
+      - name: Finalize successful release
+        if: success()
+        env:
+          VPS_HOST: ${{ vars.VPS_HOST }}
+          VPS_PORT: ${{ vars.VPS_PORT }}
+          VPS_USER: ${{ vars.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ vars.VPS_DEPLOY_PATH }}
+        run: |
+          set -Eeuo pipefail
+
+          SSH_OPTIONS=(
+            -i "$HOME/.ssh/dateplanner_deploy"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+
+          ssh \
+            "${SSH_OPTIONS[@]}" \
+            -p "$VPS_PORT" \
+            "$VPS_USER@$VPS_HOST" \
+            bash -s -- \
+            "$VPS_DEPLOY_PATH" <<'REMOTE_SCRIPT'
+
+          set -Eeuo pipefail
+
+          deploy_path=$1
+
+          cd "$deploy_path"
+
+          rm -f .env.release.previous
+
+          compose=(
+            docker compose
+            --env-file .env.production
+            --env-file .env.release
+            -f compose.production.yaml
+          )
+
+          echo "Release deployed successfully."
+          echo
+
+          "${compose[@]}" ps --all
+
+          REMOTE_SCRIPT
