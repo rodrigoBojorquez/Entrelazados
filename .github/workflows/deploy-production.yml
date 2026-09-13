@@ -125,16 +125,17 @@ jobs:
 
       - name: Configure SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_KEY }}
+          SSH_PRIVATE_KEY_BASE64: ${{ secrets.VPS_SSH_KEY_BASE64 }}
           SSH_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS }}
         run: |
           set -Eeuo pipefail
           install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/dateplanner_deploy"
+          printf '%s' "$SSH_PRIVATE_KEY_BASE64" | base64 --decode > "$HOME/.ssh/dateplanner_deploy"
           printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/dateplanner_deploy" "$HOME/.ssh/known_hosts"
           test -s "$HOME/.ssh/dateplanner_deploy"
           test -s "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/dateplanner_deploy" > /dev/null
 
       - name: Upload Compose definition
         env:
