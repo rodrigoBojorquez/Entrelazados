@@ -9,7 +9,17 @@
 - Ejecuta el siguiente comando para crear los contenedores y levantar la app:
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d --wait
+```
+
+Desarrollo no necesita un archivo `.env`. PostgreSQL arranca primero y la API
+espera a que acepte conexiones antes de iniciar. El frontend espera a la API.
+
+Los cambios en `src/app` se reflejan automáticamente en el navegador. La API se
+compila en la imagen, sin recarga automática; para aplicar cambios del backend:
+
+```bash
+docker compose up --build -d dateplanner.api
 ```
 
 ### ¿Dónde esta el front?
@@ -19,7 +29,7 @@ Si es para editar el código, es en la carpeta `/src/app` del proyecto.
 
 
 ### ¿Dónde esta el back?
-Si quieres ver la interfaz Swagger para testear los endpoint, puedes acceder a la dirección `http://localhost:8080/swagger` en tu navegador.
+Si quieres ver la interfaz Swagger para testear los endpoint, puedes acceder a la dirección `http://localhost:8081/swagger` en tu navegador.
 
 Si quieres editar el código, es en la carpeta `/src/API` del proyecto.
 
@@ -33,8 +43,11 @@ de Swagger en `/swagger`.
 1. Crea el archivo local de variables de producción:
 
 ```bash
-cp .env.production.example .env.production
+cp .env.example .env
 ```
+
+Si ya tienes un archivo `.env.production` en el servidor, renómbralo a `.env`
+antes del siguiente despliegue. Este archivo solo se utiliza para producción.
 
 2. Sustituye los secretos del archivo. Puedes generar valores hexadecimales
 seguros con:
@@ -46,7 +59,7 @@ openssl rand -hex 32
 3. Construye y levanta el stack:
 
 ```bash
-docker compose --env-file .env.production -f compose.production.yaml up --build -d
+docker compose --env-file .env -f compose.production.yaml up --build -d --wait
 ```
 
 La aplicación queda disponible en `http://localhost:8080` (o el valor de
@@ -56,9 +69,12 @@ configura TLS en el proxy o balanceador situado delante de este stack.
 Para revisar el estado y los logs:
 
 ```bash
-docker compose --env-file .env.production -f compose.production.yaml ps
-docker compose --env-file .env.production -f compose.production.yaml logs -f
+docker compose --env-file .env -f compose.production.yaml ps
+docker compose --env-file .env -f compose.production.yaml logs -f
 ```
+
+El frontend de producción usa rutas relativas, sin un archivo de variables propio;
+Nginx redirige las peticiones HTTP y WebSocket a la API en la red de Docker.
 
 La configuración completa del despliegue automático a GHCR y al VPS está en
 [`docs/production-deployment.md`](docs/production-deployment.md).

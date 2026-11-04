@@ -8,7 +8,6 @@ using DatePlanner.Domain.Dates;
 using DatePlanner.Domain.TurnGames;
 using DatePlanner.Domain.Users;
 using DatePlanner.Infrastructure.Common.Authentication;
-using DatePlanner.Infrastructure.Common.Authorization;
 using DatePlanner.Infrastructure.Common.Data;
 using DatePlanner.Infrastructure.Common.Events;
 using DatePlanner.Infrastructure.Database;
@@ -36,8 +35,6 @@ public static class InfrastructureConfiguration
     {
         services.AddAuthenticationInternal();
 
-        services.AddAuthorizationInternal();
-        
         NpgsqlDataSource npgsqlDataSource = new NpgsqlDataSourceBuilder(databaseConnectionString).Build();
         services.TryAddSingleton(npgsqlDataSource);
 

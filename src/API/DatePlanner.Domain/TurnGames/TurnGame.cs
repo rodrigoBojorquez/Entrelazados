@@ -73,8 +73,6 @@ public class TurnGame : Entity
             CreatedAtUtc = DateTime.UtcNow
         };
         
-        turnGame.Raise(new TurnGameCreatedDomainEvent(turnGame.Id));
-
         return turnGame;
     }
 
@@ -99,7 +97,6 @@ public class TurnGame : Entity
             CreatedAtUtc = DateTime.UtcNow
         };
 
-        turnGame.Raise(new TurnGameCreatedDomainEvent(turnGame.Id));
         return turnGame;
     }
 
@@ -145,14 +142,11 @@ public class TurnGame : Entity
         {
             Status = TurnGameStatus.InProgress;
             StartedAtUtc = DateTime.UtcNow;
-            Raise(new TurnGameStartedDomainEvent(Id));
         }
 
         TurnGameRound round = TurnGameRound.Create(Id, _rounds.Count + 1);
         _rounds.Add(round);
 
-        Raise(new TurnGameRoundStartedDomainEvent(Id, round.Id, round.Number));
-        
         return Result.Success();
     }
     

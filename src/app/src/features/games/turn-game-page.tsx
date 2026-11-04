@@ -1,6 +1,6 @@
 import { ArrowRight, Check, Clock3, FileText, Gamepad2, Hand, LoaderCircle, Scissors, Trophy, WifiOff } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useGetCurrentPartnerQuery } from '@/app/api'
 import { getUserIdFromToken } from '@/app/auth-storage'
 import { useAppSelector } from '@/app/hooks'
@@ -41,12 +41,11 @@ function capitalize(value: string) {
 }
 
 export function TurnGamePage() {
-  const { turnGameId = '' } = useParams()
   const navigate = useNavigate()
   const accessToken = useAppSelector((state) => state.auth.session?.accessToken ?? null)
   const currentUserId = getUserIdFromToken(accessToken)
   const { data: partner } = useGetCurrentPartnerQuery(undefined, { skip: !accessToken })
-  const { game, error, presence, connectionStatus, startRound, playMove, expireRound } = useTurnGameHub(turnGameId)
+  const { game, error, presence, connectionStatus, startRound, playMove, expireRound } = useTurnGameHub()
   const [pendingMove, setPendingMove] = useState<string | null>(null)
   const [roundPending, setRoundPending] = useState(false)
   const partnerFirstName = firstName(partner?.partnerName) ?? 'tu pareja'

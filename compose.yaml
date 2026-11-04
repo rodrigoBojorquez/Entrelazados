@@ -10,7 +10,8 @@
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
-      - dateplanner.database
+      dateplanner.database:
+        condition: service_healthy
 
   dateplanner.database:
     image: postgres:18
@@ -23,6 +24,11 @@
       - dateplanner-postgres-data:/var/lib/postgresql
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
 
   dateplanner.app:
     image: dateplanner.app
@@ -35,7 +41,7 @@
       - /bin/sh
       - -ec
       - |
-        npm ci
+        npm ci --no-audit --no-fund
         exec npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
 
     volumes:
@@ -44,14 +50,14 @@
 
     environment:
       CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: "100"
       VITE_API_PROXY_TARGET: "http://dateplanner.api:8080"
 
     ports:
       - "5173:5173"
 
     depends_on:
-      - dateplanner.api
+      dateplanner.api:
+        condition: service_healthy
 
 volumes:
   dateplanner-postgres-data:

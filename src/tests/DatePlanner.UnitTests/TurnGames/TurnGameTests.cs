@@ -68,20 +68,6 @@ public class TurnGameTests : BaseTest
     }
 
     [Fact]
-    public void Create_ShouldPublishCreatedEvent_WithGameId()
-    {
-        TurnGame game = CreateGame(TurnGameType.RockPaperScissors);
-
-        TurnGameCreatedDomainEvent domainEvent =
-            AssertDomainEventWasPublished<TurnGameCreatedDomainEvent>(game);
-
-        domainEvent.TurnGameId.Should().Be(game.Id);
-        domainEvent.Id.Should().NotBeEmpty();
-        domainEvent.OccurredOnUtc.Should().NotBe(default);
-        game.DomainEvents.Should().ContainSingle();
-    }
-
-    [Fact]
     public void Create_ShouldRejectUnsupportedGameType()
     {
         Result<TurnGame> result = TurnGame.Create(CreateCouple(), (TurnGameType)999);
@@ -99,7 +85,7 @@ public class TurnGameTests : BaseTest
     }
 
     [Fact]
-    public void StartRound_ShouldStartGameAndFirstRound_AndPublishBothEvents()
+    public void StartRound_ShouldStartGameAndFirstRound()
     {
         TurnGame game = CreateGame(TurnGameType.RockPaperScissors);
 
@@ -115,15 +101,6 @@ public class TurnGameTests : BaseTest
         round.Status.Should().Be(TurnGameRoundStatus.InProgress);
         round.IsDraw.Should().BeFalse();
         round.Moves.Should().BeEmpty();
-
-        TurnGameStartedDomainEvent started = AssertDomainEventWasPublished<TurnGameStartedDomainEvent>(game);
-        started.TurnGameId.Should().Be(game.Id);
-        TurnGameRoundStartedDomainEvent roundStarted =
-            AssertDomainEventWasPublished<TurnGameRoundStartedDomainEvent>(game);
-        roundStarted.TurnGameId.Should().Be(game.Id);
-        roundStarted.RoundId.Should().Be(round.Id);
-        roundStarted.RoundNumber.Should().Be(1);
-        game.DomainEvents.Should().HaveCount(3);
     }
 
     [Fact]
@@ -346,9 +323,6 @@ public class TurnGameTests : BaseTest
         result.IsSuccess.Should().BeTrue();
         game.Rounds.Select(x => x.Number).Should().Equal(1, 2);
         game.Rounds.Last().Status.Should().Be(TurnGameRoundStatus.InProgress);
-        game.DomainEvents.OfType<TurnGameStartedDomainEvent>().Should().ContainSingle();
-        game.DomainEvents.OfType<TurnGameRoundStartedDomainEvent>().Should().HaveCount(2);
-        game.DomainEvents.OfType<TurnGameRoundStartedDomainEvent>().Last().RoundNumber.Should().Be(2);
     }
 
     [Fact]
@@ -436,7 +410,7 @@ public class TurnGameTests : BaseTest
     [Fact]
     public void ClearDomainEvents_ShouldRemovePreviouslyPublishedEvents()
     {
-        TurnGame game = CreateStartedGame(TurnGameType.RockPaperScissors);
+        TurnGame game = CreateFinishedGame();
         game.DomainEvents.Should().NotBeEmpty();
 
         game.ClearDomainEvents();

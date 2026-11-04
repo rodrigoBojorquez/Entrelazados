@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 import { PublicOnly, RequireAuth } from '@/app/route-guards'
+import { TurnGameHubProvider } from '@/app/turn-game-hub'
 import Layout from '@/Layout'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
@@ -10,7 +11,7 @@ export const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [{
-      element: <Layout />,
+      element: <TurnGameHubProvider><Layout /></TurnGameHubProvider>,
       children: [
         { index: true, lazy: () => import('@/features/home/home-page').then((module) => ({ Component: module.HomePage })) },
         { path: 'conectar', lazy: () => import('@/features/couple/connect-partner-page').then((module) => ({ Component: module.ConnectPartnerPage })) },

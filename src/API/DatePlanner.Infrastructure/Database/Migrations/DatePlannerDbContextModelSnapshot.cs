@@ -456,107 +456,6 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                     b.ToTable("users", "dateplanner");
                 });
 
-            modelBuilder.Entity("DatePlanner.Infrastructure.DateIdeas.DateIdea", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("city");
-
-                    b.Property<Guid>("CoupleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("couple_id");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<TimeOnly?>("EndsAt")
-                        .HasColumnType("time without time zone")
-                        .HasColumnName("ends_at");
-
-                    b.Property<decimal?>("EstimatedBudget")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
-                        .HasColumnName("estimated_budget");
-
-                    b.Property<decimal>("PreferredBudget")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
-                        .HasColumnName("preferred_budget");
-
-                    b.Property<Guid?>("ResultPlan")
-                        .HasColumnType("uuid")
-                        .HasColumnName("result_plan_id");
-
-                    b.Property<TimeOnly?>("StartsAt")
-                        .HasColumnType("time without time zone")
-                        .HasColumnName("starts_at");
-
-                    b.HasKey("Id")
-                        .HasName("pk_date_ideas");
-
-                    b.HasIndex("CoupleId")
-                        .HasDatabaseName("ix_date_ideas_couple_id");
-
-                    b.HasIndex("ResultPlan")
-                        .HasDatabaseName("ix_date_ideas_result_plan");
-
-                    b.ToTable("date_ideas", "dateplanner", t =>
-                        {
-                            t.HasCheckConstraint("ck_date_ideas_estimated_budget_non_negative", "estimated_budget IS NULL OR estimated_budget >= 0");
-
-                            t.HasCheckConstraint("ck_date_ideas_preferred_budget_non_negative", "preferred_budget >= 0");
-                        });
-                });
-
-            modelBuilder.Entity("DatePlanner.Infrastructure.DateIdeas.DateIdeaItineraryItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("DateIdeaId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("date_idea_id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer")
-                        .HasColumnName("order");
-
-                    b.Property<TimeOnly?>("StartsAt")
-                        .HasColumnType("time without time zone")
-                        .HasColumnName("starts_at");
-
-                    b.PrimitiveCollection<List<string>>("Tags")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("tags");
-
-                    b.HasKey("Id")
-                        .HasName("pk_date_idea_itinerary_items");
-
-                    b.HasIndex("DateIdeaId", "Order")
-                        .IsUnique()
-                        .HasDatabaseName("ix_date_idea_itinerary_items_date_idea_id_order");
-
-                    b.ToTable("date_idea_itinerary_items", "dateplanner", t =>
-                        {
-                            t.HasCheckConstraint("ck_date_idea_itinerary_items_order_positive", "\"order\" > 0");
-                        });
-                });
-
             modelBuilder.Entity("DatePlanner.Domain.Authentication.RefreshToken", b =>
                 {
                     b.HasOne("DatePlanner.Domain.Users.User", null)
@@ -711,59 +610,6 @@ namespace DatePlanner.Infrastructure.Database.Migrations
                         .HasConstraintName("fk_dating_preferences_users_user_id");
                 });
 
-            modelBuilder.Entity("DatePlanner.Infrastructure.DateIdeas.DateIdea", b =>
-                {
-                    b.HasOne("DatePlanner.Domain.Couples.Couple", null)
-                        .WithMany()
-                        .HasForeignKey("CoupleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_date_ideas_couples_couple_id");
-
-                    b.HasOne("DatePlanner.Domain.Dates.DatePlan", null)
-                        .WithMany()
-                        .HasForeignKey("ResultPlan")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_date_ideas_date_plans_result_plan");
-                });
-
-            modelBuilder.Entity("DatePlanner.Infrastructure.DateIdeas.DateIdeaItineraryItem", b =>
-                {
-                    b.HasOne("DatePlanner.Infrastructure.DateIdeas.DateIdea", null)
-                        .WithMany("Itinerary")
-                        .HasForeignKey("DateIdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_date_idea_itinerary_items_date_ideas_date_idea_id");
-
-                    b.OwnsOne("DatePlanner.Domain.Dates.Location", "Location", b1 =>
-                        {
-                            b1.Property<Guid>("DateIdeaItineraryItemId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<decimal>("Latitude")
-                                .HasPrecision(9, 6)
-                                .HasColumnType("numeric(9,6)")
-                                .HasColumnName("latitude");
-
-                            b1.Property<decimal>("Longitude")
-                                .HasPrecision(10, 6)
-                                .HasColumnType("numeric(10,6)")
-                                .HasColumnName("longitude");
-
-                            b1.HasKey("DateIdeaItineraryItemId");
-
-                            b1.ToTable("date_idea_itinerary_items", "dateplanner");
-
-                            b1.WithOwner()
-                                .HasForeignKey("DateIdeaItineraryItemId")
-                                .HasConstraintName("fk_date_idea_itinerary_items_date_idea_itinerary_items_id");
-                        });
-
-                    b.Navigation("Location");
-                });
-
             modelBuilder.Entity("DatePlanner.Domain.Dates.DatePlan", b =>
                 {
                     b.Navigation("Itinerary");
@@ -782,11 +628,6 @@ namespace DatePlanner.Infrastructure.Database.Migrations
             modelBuilder.Entity("DatePlanner.Domain.Users.User", b =>
                 {
                     b.Navigation("DatingPreferences");
-                });
-
-            modelBuilder.Entity("DatePlanner.Infrastructure.DateIdeas.DateIdea", b =>
-                {
-                    b.Navigation("Itinerary");
                 });
 #pragma warning restore 612, 618
         }

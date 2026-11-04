@@ -1,12 +1,27 @@
 import * as signalR from '@microsoft/signalr'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useMatch } from 'react-router'
 import type { HubResponse, TurnGame, TurnGamePresence, TurnGameType } from './types'
 import { useAppDispatch, useAppSelector } from './hooks'
 import { datePlannerApi } from './api'
 
 type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
-export function useTurnGameHub(turnGameId?: string) {
+const TurnGameHubContext = createContext<ReturnType<typeof useTurnGameConnection> | null>(null)
+
+export function TurnGameHubProvider({ children }: { children: ReactNode }) {
+  const turnGameId = useMatch('/juego/:turnGameId')?.params.turnGameId
+  const value = useTurnGameConnection(turnGameId)
+  return createElement(TurnGameHubContext.Provider, { value }, children)
+}
+
+export function useTurnGameHub() {
+  const hub = useContext(TurnGameHubContext)
+  if (!hub) throw new Error('TurnGameHubProvider is required.')
+  return hub
+}
+
+function useTurnGameConnection(turnGameId?: string) {
   const accessToken = useAppSelector((state) => state.auth.session?.accessToken)
   const dispatch = useAppDispatch()
   const connectionRef = useRef<signalR.HubConnection | null>(null)
@@ -47,12 +62,6 @@ export function useTurnGameHub(turnGameId?: string) {
     connection.on('TurnGameScheduled', (notification: { turnGameId: string }) => {
       setScheduledGameId(notification.turnGameId)
       dispatch(datePlannerApi.util.invalidateTags(['TurnGame']))
-      // Domain notifications can reach SignalR a few milliseconds before the
-      // transaction commits. A second invalidation guarantees both screens read
-      // the persisted scheduled game after commit.
-      window.setTimeout(() => {
-        dispatch(datePlannerApi.util.invalidateTags(['TurnGame']))
-      }, 500)
     })
     connection.on('TurnGameSelected', (selected: TurnGame) => {
       setGame(selected)
@@ -62,25 +71,33 @@ export function useTurnGameHub(turnGameId?: string) {
     connection.on('TurnGamePresenceChanged', (updatedPresence: TurnGamePresence) => {
       setPresence(updatedPresence)
     })
-    connection.onreconnecting(() => setConnectionStatus('reconnecting'))
+    connection.onreconnecting(() => {
+      if (!cancelled) setConnectionStatus('reconnecting')
+    })
     connection.onreconnected(async () => {
+      if (cancelled) return
       setConnectionStatus('connected')
       if (turnGameId) {
         const response = await connection.invoke<HubResponse<TurnGame>>('JoinTurnGame', turnGameId)
-        setGame(unwrap(response))
+        if (!cancelled) setGame(unwrap(response))
       }
     })
-    connection.onclose(() => setConnectionStatus('disconnected'))
+    connection.onclose(() => {
+      if (!cancelled) setConnectionStatus('disconnected')
+    })
 
     const start = async () => {
       try {
         setConnectionStatus('connecting')
         await connection.start()
         if (cancelled) return
+        setGame(null)
+        setPresence(null)
+        setError(null)
         setConnectionStatus('connected')
         if (turnGameId) {
           const response = await connection.invoke<HubResponse<TurnGame>>('JoinTurnGame', turnGameId)
-          setGame(unwrap(response))
+          if (!cancelled) setGame(unwrap(response))
         }
       } catch (reason) {
         if (!cancelled) {
@@ -149,9 +166,9 @@ export function useTurnGameHub(turnGameId?: string) {
   }, [game, invoke])
 
   return {
-    game,
+    game: game?.id === turnGameId ? game : null,
     error,
-    presence,
+    presence: presence?.turnGameId === turnGameId ? presence : null,
     scheduledGameId,
     selectedGameId,
     connectionStatus,

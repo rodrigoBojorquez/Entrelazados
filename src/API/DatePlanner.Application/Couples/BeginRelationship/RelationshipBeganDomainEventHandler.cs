@@ -27,7 +27,7 @@ public sealed class RelationshipBeganDomainEventHandler(
                 CoupleErrors.NotFound(domainEvent.PartnerOneId));
         }
 
-        Result<Guid> result = await turnGameScheduler.ScheduleAsync(couple, cancellationToken);
+        Result<Guid> result = await turnGameScheduler.ScheduleAsync(couple);
 
         if (result.IsFailure)
         {

@@ -25,7 +25,7 @@ public sealed class DatePlanAttendedDomainEventHandler(
             return;
         }
 
-        Result<Guid> result = await turnGameScheduler.ScheduleAsync(couple, cancellationToken);
+        Result<Guid> result = await turnGameScheduler.ScheduleAsync(couple);
 
         if (result.IsFailure)
         {

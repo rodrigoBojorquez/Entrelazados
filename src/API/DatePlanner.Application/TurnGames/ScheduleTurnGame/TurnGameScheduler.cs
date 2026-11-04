@@ -1,4 +1,3 @@
-using DatePlanner.Application.Common.Notifications;
 using DatePlanner.Domain.Abstractions;
 using DatePlanner.Domain.Couples;
 using DatePlanner.Domain.TurnGames;
@@ -6,12 +5,9 @@ using DatePlanner.Domain.TurnGames;
 namespace DatePlanner.Application.TurnGames.ScheduleTurnGame;
 
 public sealed class TurnGameScheduler(
-    ITurnGameRepository turnGameRepository,
-    ITurnGameNotifier notifier)
+    ITurnGameRepository turnGameRepository)
 {
-    public async Task<Result<Guid>> ScheduleAsync(
-        Couple couple,
-        CancellationToken cancellationToken)
+    public async Task<Result<Guid>> ScheduleAsync(Couple couple)
     {
         TurnGame? existingGame =
             await turnGameRepository.GetActivePlanningGameByCoupleIdAsync(couple.Id);
@@ -30,12 +26,6 @@ public sealed class TurnGameScheduler(
 
         TurnGame turnGame = creationResult.Value;
         turnGameRepository.Insert(turnGame);
-
-        await notifier.NotifyGameScheduledAsync(
-            turnGame.Id,
-            turnGame.PlayerOneId,
-            turnGame.PlayerTwoId,
-            cancellationToken);
 
         return turnGame.Id;
     }

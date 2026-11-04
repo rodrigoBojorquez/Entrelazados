@@ -83,7 +83,7 @@ jobs:
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: src/API/DatePlanner.Api/Dockerfile.prod
+          file: src/API/DatePlanner.Api/Dockerfile
           platforms: linux/amd64
           push: true
           tags: |
@@ -215,8 +215,8 @@ jobs:
 
           cd "$deploy_path"
 
-          test -f .env.production || {
-            echo "Missing $deploy_path/.env.production" >&2
+          test -f .env || {
+            echo "Missing $deploy_path/.env" >&2
             exit 1
           }
 
@@ -249,7 +249,7 @@ jobs:
 
           compose=(
             docker compose
-            --env-file .env.production
+            --env-file .env
             --env-file .env.release
             -f compose.production.yaml
           )
@@ -364,13 +364,13 @@ jobs:
             echo "No previous release available. Nothing to roll back." >&2
 
             docker compose \
-              --env-file .env.production \
+              --env-file .env \
               --env-file .env.release \
               -f compose.production.yaml \
               ps --all || true
 
             docker compose \
-              --env-file .env.production \
+              --env-file .env \
               --env-file .env.release \
               -f compose.production.yaml \
               logs \
@@ -392,7 +392,7 @@ jobs:
 
           compose=(
             docker compose
-            --env-file .env.production
+            --env-file .env
             --env-file .env.release
             -f compose.production.yaml
           )
@@ -456,7 +456,7 @@ jobs:
 
           compose=(
             docker compose
-            --env-file .env.production
+            --env-file .env
             --env-file .env.release
             -f compose.production.yaml
           )
